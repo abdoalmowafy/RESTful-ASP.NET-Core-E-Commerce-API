@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceAPI.Controllers.Manage
 {
-    [Route("api/[action]")]
+    [Route("api/manage/[action]")]
     [ApiController]
     [Authorize(Roles = "Admin,Moderator")]
     public class ManageRoleController(DataContext context, UserManager<User> userManager, RoleManager<IdentityRole> roleManager) : ControllerBase
