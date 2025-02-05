@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceAPI.Controllers
 {
-    [Route("api/[action]")]
+    [Route("api")]
     [ApiController]
     public class StoreController(IDbContextFactory<DataContext> contextFactory, DataContext context) : ControllerBase
     {
@@ -19,51 +19,6 @@ namespace ECommerceAPI.Controllers
         public IActionResult GetCategoriesNames() => Ok(_context.Categories.AsNoTracking().Select(c => c.Name));
 
         [HttpGet]
-        //public async Task<IActionResult> Home()
-        //{
-        //    var nonDeletedAvailableProducts = _context.Products
-        //        .Include(p => p.Category)
-        //        .Where(p => p.DeletedDateTime == null && p.Quantity > 0)
-        //        .AsNoTracking();
-
-        //    var orderedByOrdersTask = nonDeletedAvailableProducts
-        //        .GroupJoin(_context.OrderProducts.AsNoTracking(), p => p.Id, op => op.Product.Id,
-        //            (product, orderGroup) => new
-        //            {
-        //                Product = product,
-        //                TotalOrders = orderGroup.Sum(op => op.Quantity)
-        //            })
-        //        .OrderByDescending(p => p.TotalOrders)
-        //        .Take(25)
-        //        .Select(p => p.Product.Adapt<ProductPriefResponse>())
-        //        .ToListAsync();
-
-        //    var orderedBySaleTask = nonDeletedAvailableProducts
-        //        .Where(p => p.SalePercent > 0)
-        //        .OrderByDescending(p => p.SalePercent)
-        //        .Take(25)
-        //        .Select(p => p.Adapt<ProductPriefResponse>())
-        //        .ToListAsync();
-
-        //    var orderedByCreatedTimeTask = nonDeletedAvailableProducts
-        //        .OrderByDescending(p => p.CreatedDateTime)
-        //        .Take(25)
-        //        .Select(p => p.Adapt<ProductPriefResponse>())
-        //        .ToListAsync();
-
-        //    var results = await Task.WhenAll(
-        //        orderedByOrdersTask,
-        //        orderedBySaleTask,
-        //        orderedByCreatedTimeTask
-        //    );
-
-        //    return Ok(new
-        //    {
-        //        orderedByOrders = results[0],
-        //        orderedBySale = results[1],
-        //        orderedByCreatedTime = results[2]
-        //    });
-        //}
         public async Task<IActionResult> Home()
         {
             using var context1 = await _contextFactory.CreateDbContextAsync();
@@ -117,7 +72,7 @@ namespace ECommerceAPI.Controllers
             });
         }
 
-        [HttpGet]
+        [HttpGet("{categoryName}/{keyWord}")]
         public async Task<IActionResult> Search(string keyWord, string categoryName = "All", bool includeOutOfStock = false, bool includeDeleted = false, int pageIndex = 1)
         {
             var category = await _context.Categories.AsNoTracking().FirstOrDefaultAsync(c => c.Name == categoryName);

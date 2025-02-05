@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceAPI.Controllers.Manage
 {
-    [Route("api/manage/[action]")]
+    [Route("api/manage/Category")]
     [ApiController]
     [Authorize(Roles = "Admin,Moderator")]
     public class ManageCategoryController(DataContext context) : ControllerBase

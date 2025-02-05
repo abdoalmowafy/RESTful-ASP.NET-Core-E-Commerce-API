@@ -2,7 +2,7 @@
 
 namespace ECommerceAPI.DTOs.Responses
 {
-    public class ReturnProductOrderResponse
+    public class ReturnResponse
     {
         public int? Id { get; set; }
         public UserDetailedResponse? Transporter { get; set; }

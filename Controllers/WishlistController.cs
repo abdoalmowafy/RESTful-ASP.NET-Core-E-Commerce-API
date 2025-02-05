@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceAPI.Controllers
 {
-    [Route("api/[action]")]
+    [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class WishlistController(DataContext context) : ControllerBase

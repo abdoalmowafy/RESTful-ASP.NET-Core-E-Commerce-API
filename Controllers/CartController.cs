@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceAPI.Controllers
 {
-    [Route("api/[action]")]
+    [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class CartController(DataContext context) : ControllerBase
@@ -52,7 +52,7 @@ namespace ECommerceAPI.Controllers
             return Ok(cart.Adapt<CartResponse>());
         }
 
-        [HttpPatch]
+        [HttpPost("{productId}")]
         public async Task<IActionResult> UpdateCartProducts(int productId, int count = 1)
         {
             var product = await _context.Products.FindAsync(productId);
@@ -101,7 +101,7 @@ namespace ECommerceAPI.Controllers
             return Ok(cart.Adapt<CartResponse>());
         }
 
-        [HttpPatch]
+        [HttpPatch("{promoCode}")]
         public async Task<IActionResult> ApplyPromoCode(string? promoCode)
         {
             var user = await _context.Users

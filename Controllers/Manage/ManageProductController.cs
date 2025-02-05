@@ -5,10 +5,11 @@ using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
 
 namespace ECommerceAPI.Controllers.Manage
 {
-    [Route("api/manage/[action]")]
+    [Route("api/manage/Product")]
     [ApiController]
     [Authorize(Roles = "Admin,Moderator")]
     public class ManageProductController(DataContext context) : ControllerBase
@@ -139,7 +140,7 @@ namespace ECommerceAPI.Controllers.Manage
             return Ok("Product deleted successfully!");
         }
 
-        [HttpPost("{id}")]
+        [HttpPatch("{id}")]
         public async Task<IActionResult> RecoverProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);

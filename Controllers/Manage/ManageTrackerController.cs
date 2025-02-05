@@ -1,7 +1,9 @@
 ﻿using ECommerceAPI.Data;
 using ECommerceAPI.DTOs.Responses;
+using ECommerceAPI.Models;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,12 +12,13 @@ namespace ECommerceAPI.Controllers.Manage
     [Route("api/manage/[action]")]
     [ApiController]
     [Authorize(Roles = "Admin,Moderator")]
-    public class ManageTrackerController(DataContext context) : ControllerBase
+    public class ManageTrackerController(DataContext context, UserManager<User> userManager) : ControllerBase
     {
         private readonly DataContext _context = context;
+        private readonly UserManager<User> _userManager = userManager;
 
         [HttpGet]
-        public async Task<IActionResult> ChangesTracker(
+        public async Task<IActionResult> EditHistory(
             string? editorUsername,
             string? editedType,
             string? editedId,
@@ -52,7 +55,7 @@ namespace ECommerceAPI.Controllers.Manage
         }
 
         [HttpGet]
-        public async Task<IActionResult> DeletesTracker(
+        public async Task<IActionResult> DeleteHistory(
             string? deleterUsername,
             string? deletedType,
             int? deletedId,
@@ -80,7 +83,7 @@ namespace ECommerceAPI.Controllers.Manage
         }
 
         [HttpGet]
-        public async Task<IActionResult> ChartView()
+        public async Task<IActionResult> ProductMetrics()
         {
             var searchedWords = _context.Searches.AsNoTracking()
                 .Where(s => !string.IsNullOrWhiteSpace(s.KeyWord))
@@ -112,7 +115,7 @@ namespace ECommerceAPI.Controllers.Manage
                     ProductViews = pair.product.Views,
                     CartCount = _context.CartProducts.AsNoTracking().Where(cp => cp.Product.Id == pair.product.Id).Count(),
                     WishlistCount = _context.Users.AsNoTracking().Count(u => u.WishList.Any(p => p.Id == pair.product.Id)),
-                    ReturnedCount = _context.ReturnProductOrders
+                    ReturnedCount = _context.Returns
                         .Include(rpo => rpo.OrderProduct)
                             .ThenInclude(op => op.Product)
                         .AsNoTracking()
@@ -129,7 +132,7 @@ namespace ECommerceAPI.Controllers.Manage
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> ProductCharts(int id, DateTime? startingDate)
+        public async Task<IActionResult> ProductMetrics(int id, DateTime? startingDate)
         {
             var product = await _context.Products
                 .Include(p => p.Reviews)
@@ -156,7 +159,7 @@ namespace ECommerceAPI.Controllers.Manage
                     .ThenInclude(op => op.Product)
                 .AsNoTracking();
 
-            var returnQuery = _context.ReturnProductOrders
+            var returnQuery = _context.Returns
                 .Include(rpo => rpo.OrderProduct)
                     .ThenInclude(op => op.Product)
                 .AsNoTracking()
@@ -212,8 +215,16 @@ namespace ECommerceAPI.Controllers.Manage
             return Ok(new { productMetrics, startingDate });
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Admin,Moderator")]
+        public async Task<IActionResult> Transporter()
+        {
+            var transporters = await _userManager.GetUsersInRoleAsync("Transporter");
+            return Ok(transporters.Adapt<IList<UserDetailedResponse>>());
+        }
+
         [HttpGet("{id}")]
-        public async Task<IActionResult> TransporterTracker(string id)
+        public async Task<IActionResult> Transporter(string id)
         {
             var transporter = await _context.Users.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
             if (transporter is null)
@@ -227,7 +238,7 @@ namespace ECommerceAPI.Controllers.Manage
                 .Where(o => o.Transporter != null && o.Transporter.Id == id)
                 .ToListAsync();
 
-            var returnProductOrdersTask = _context.ReturnProductOrders
+            var returnsTask = _context.Returns
                 .Include(rpo => rpo.Transporter)
                 .Include(rpo => rpo.Order)
                 .Include(rpo => rpo.OrderProduct)
@@ -236,12 +247,12 @@ namespace ECommerceAPI.Controllers.Manage
                 .Where(rpo => rpo.Transporter != null && rpo.Transporter.Id == id)
                 .ToListAsync();
 
-            await Task.WhenAll(ordersTask, returnProductOrdersTask);
+            await Task.WhenAll(ordersTask, returnsTask);
 
             var orders = await ordersTask;
-            var returnProductOrders = await returnProductOrdersTask;
+            var returns = await returnsTask;
 
-            return Ok(new { transporter = transporter.Adapt<UserPriefResponse>(), orders, returnProductOrders });
+            return Ok(new { transporter = transporter.Adapt<UserPriefResponse>(), orders, returns });
         }
     }
 }

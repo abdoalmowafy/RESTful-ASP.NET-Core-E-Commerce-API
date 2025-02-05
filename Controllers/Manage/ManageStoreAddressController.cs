@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceAPI.Controllers.Manage
 {
-    [Route("api/manage/[action]")]
+    [Route("api/manage/StoreAddress")]
     [ApiController]
     [Authorize(Roles = "Admin,Moderator")]
     public class ManageStoreAddressController(DataContext context) : ControllerBase

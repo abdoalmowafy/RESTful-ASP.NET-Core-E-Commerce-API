@@ -17,7 +17,7 @@ public class DataContext(DbContextOptions<DataContext> options) : IdentityDbCont
     public DbSet<PromoCode> PromoCodes { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderProduct> OrderProducts { get; set; }
-    public DbSet<ReturnProductOrder> ReturnProductOrders { get; set; }
+    public DbSet<Return> Returns { get; set; }
     public DbSet<EditHistory> EditHistories { get; set; }
     public DbSet<DeleteHistory> DeletesHistory { get; set; }
     public DbSet<Search> Searches { get; set; }
@@ -134,9 +134,9 @@ public class DataContext(DbContextOptions<DataContext> options) : IdentityDbCont
             .HasForeignKey(o => o.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // One User has many ReturnProductOrders
+        // One User has many Returns
         builder.Entity<User>()
-            .HasMany(u => u.ReturnProductOrders)
+            .HasMany(u => u.Returns)
             .WithOne()
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -249,31 +249,31 @@ public class DataContext(DbContextOptions<DataContext> options) : IdentityDbCont
             .WithOne()
             .OnDelete(DeleteBehavior.Restrict);
 
-        // --- ReturnProductOrder relations ---
-        // One Transporter has many ReturnProductOrders
-        builder.Entity<ReturnProductOrder>()
+        // --- Returns relations ---
+        // One Transporter has many Returns
+        builder.Entity<Return>()
         .Property(o => o.Status)
         .HasConversion<string>();
 
-        builder.Entity<ReturnProductOrder>()
+        builder.Entity<Return>()
             .HasOne(rpo => rpo.Transporter)
             .WithMany()
             .OnDelete(DeleteBehavior.Restrict);
 
-        // One Address has many ReturnProductOrders
-        builder.Entity<ReturnProductOrder>()
+        // One Address has many Returns
+        builder.Entity<Return>()
             .HasOne(rpo => rpo.Address)
             .WithMany()
             .OnDelete(DeleteBehavior.Restrict);
 
-        // One Order has many ReturnProductOrders
-        builder.Entity<ReturnProductOrder>()
+        // One Order has many Returns
+        builder.Entity<Return>()
             .HasOne(rpo => rpo.Order)
             .WithMany()
             .OnDelete(DeleteBehavior.Restrict);
 
-        // One OrderProduct has many ReturnProductOrders
-        builder.Entity<ReturnProductOrder>()
+        // One OrderProduct has many Returns
+        builder.Entity<Return>()
             .HasOne(rpo => rpo.OrderProduct)
             .WithMany()
             .OnDelete(DeleteBehavior.Restrict);

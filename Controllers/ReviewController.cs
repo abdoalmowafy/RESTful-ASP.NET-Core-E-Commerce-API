@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceAPI.Controllers
 {
-    [Route("api/[action]")]
+    [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class ReviewController(DataContext context) : ControllerBase
@@ -58,10 +58,10 @@ namespace ECommerceAPI.Controllers
                 .Include(r => r.Reviewer)
                 .FirstOrDefaultAsync(r => r.Reviewer == user && r.ProductId == request.ProductId);
 
+            if (review?.Reviewer != user) return Forbid();
+            
             if (review is null || review.DeletedDateTime.HasValue) return NotFound("Review not found!");
-
-            if (review.Reviewer != user) return Forbid();
-
+            
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             review.Rating = request.Rating;
@@ -72,7 +72,7 @@ namespace ECommerceAPI.Controllers
             return Ok(review.Adapt<ReviewResponse>());
         }
 
-        [HttpDelete("id")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteReview(int id)
         {
             var review = await _context.Reviews

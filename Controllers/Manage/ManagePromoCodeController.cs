@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceAPI.Controllers.Manage
 {
-    [Route("api/manage/[action]")]
+    [Route("api/manage/PromoCode")]
     [ApiController]
     [Authorize(Roles = "Admin,Moderator")]
     public class ManagePromoCodeController(DataContext context) : ControllerBase

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceAPI.Controllers.Manage
 {
-    [Route("api/manage/[action]")]
+    [Route("api/manage/Role")]
     [ApiController]
     [Authorize(Roles = "Admin,Moderator")]
     public class ManageRoleController(DataContext context, UserManager<User> userManager, RoleManager<IdentityRole> roleManager) : ControllerBase
@@ -17,12 +17,6 @@ namespace ECommerceAPI.Controllers.Manage
         private readonly DataContext _context = context;
         private readonly UserManager<User> _userManager = userManager;
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
-
-        [HttpGet]
-        public IActionResult IndexRoles()
-        {
-            return Ok(_roleManager.Roles.AsNoTracking());
-        }
 
         [HttpGet]
         public async Task<IActionResult> IndexUsers(string role = "", string targetUser = "", int pageIndex = 1)

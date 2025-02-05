@@ -8,11 +8,13 @@ using Microsoft.EntityFrameworkCore;
 using ECommerceAPI.DTOs.Responses;
 using Microsoft.IdentityModel.Tokens;
 using Mapster;
+using ECommerceAPI.DTOs.Requests;
 
 namespace ECommerceAPI.Controllers
 {
-    [Route("api/[action]")]
+    [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class OrderController(DataContext context, IConfiguration configuration, HttpClient httpClient) : ControllerBase
     {
         private readonly DataContext _context = context;
@@ -21,7 +23,7 @@ namespace ECommerceAPI.Controllers
         private readonly int IntegrationId = int.Parse(configuration.GetSection("Paymob")["IntegrationId"]!);
         private readonly int IframeId = int.Parse(configuration.GetSection("Paymob")["Iframe1Id"]!);
 
-        [Authorize, HttpGet]
+        [HttpGet]
         public async Task<IActionResult> IndexOrders(int pageIndex = 1)
         {
             var user = await _context.Users
@@ -33,13 +35,6 @@ namespace ECommerceAPI.Controllers
                     .ThenInclude(o => o.PromoCode)
                 .Include(u => u.Orders)
                     .ThenInclude(o => o.Address)
-                .Include(u => u.ReturnProductOrders)
-                    .ThenInclude(rpo => rpo.Address)
-                .Include(u => u.ReturnProductOrders)
-                    .ThenInclude(rpo => rpo.Order)
-                .Include(u => u.ReturnProductOrders)
-                    .ThenInclude(rpo => rpo.OrderProduct)
-                        .ThenInclude(op => op.Product)
                 .AsNoTracking()
                 .FirstAsync(u => u.UserName == User.Identity!.Name);
 
@@ -49,17 +44,11 @@ namespace ECommerceAPI.Controllers
                 .Select(o => o.Adapt<OrderResponse>())
                 .ToPaginatedList(pageIndex, 10);
 
-            var returnProductOrders = user.ReturnProductOrders
-                .OrderByDescending(o => o.CreatedDateTime)
-                .Select(o => o.Adapt<ReturnProductOrderResponse>())
-                .ToPaginatedList(pageIndex, 10);
-
-            return Ok(new { orders, returnProductOrders });
+            return Ok(orders);
         }
 
         [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> NewOrder(PaymentMethod paymentMethod, bool deliveryNeeded, int shippingAddressId, string? identifier)
+        public async Task<IActionResult> NewOrder([FromBody] OrderRequest request)
         {
             var user = await _context.Users
                 .Include(u => u.Orders)
@@ -85,12 +74,14 @@ namespace ECommerceAPI.Controllers
                 || (promo is not null && !promo.Active))
                 return BadRequest();
 
-            var address = deliveryNeeded ? user.Addresses.FirstOrDefault(a => a.Id == shippingAddressId) : await _context.StoreAddresses.FindAsync(shippingAddressId);
+            var address = request.DeliveryNeeded ? 
+                user.Addresses.FirstOrDefault(a => a.Id == request.AddressId) : 
+                await _context.StoreAddresses.FindAsync(request.AddressId);
             if (address is null) return NotFound();
 
             OrderStatus orderStatus = OrderStatus.Paying;
-            long Fee = deliveryNeeded ? 5000L : 0L;
-            if (paymentMethod == PaymentMethod.COD)
+            long Fee = request.DeliveryNeeded ? 5000L : 0L;
+            if (request.PaymentMethod == PaymentMethod.COD)
             {
                 Fee += 1000;
                 orderStatus = OrderStatus.Processing;
@@ -121,41 +112,40 @@ namespace ECommerceAPI.Controllers
                 UserId = user.Id,
                 User = user,
                 PromoCode = promo,
-                PaymentMethod = paymentMethod,
+                PaymentMethod = request.PaymentMethod,
                 Status = orderStatus,
                 TotalCents = Fee + (promo is null ? totalCentsNoPromo
                 : promo.MaxSaleCents is null ? totalCentsNoPromo * (100 - promo.Percent) / 100
                 : totalCentsNoPromo - Math.Min(totalCentsNoPromo * promo.Percent / 100, promo.MaxSaleCents.Value)),
-                DeliveryNeeded = deliveryNeeded,
+                DeliveryNeeded = request.DeliveryNeeded,
                 OrderProducts = orderProducts,
                 Address = address
             };
 
             // Processing Order
-            if (paymentMethod == PaymentMethod.COD)
+            if (request.PaymentMethod == PaymentMethod.COD)
             {
                 _context.Orders.Add(order);
                 user.Orders.Add(order);
                 await _context.SaveChangesAsync();
                 return Ok(order.Adapt<OrderResponse>());
             }
-            else if (paymentMethod == PaymentMethod.CreditCard)
+            else if (request.PaymentMethod == PaymentMethod.CreditCard)
             {
                 var PaymobService = new PaymobService(_httpClient, configuration);
-                var payment_url = await PaymobService.PayAsync(order, identifier);
+                var payment_url = await PaymobService.PayAsync(order, request.Identifier);
                 return Ok(new { payment_url });
             }
             else
             {
                 var PaymobService = new PaymobService(_httpClient, configuration);
-                var payment_url = await PaymobService.PayAsync(order, identifier);
+                var payment_url = await PaymobService.PayAsync(order, request.Identifier);
                 return Ok(new { payment_url });
             }
         }
 
-        [HttpDelete]
-        [Authorize]
-        public async Task<IActionResult> DeleteOrder(int orderId)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteOrder(int id)
         {
             var user = await _context.Users
                 .Include(u => u.Orders)
@@ -164,8 +154,8 @@ namespace ECommerceAPI.Controllers
                 .FirstAsync(u => u.UserName == User.Identity!.Name);
 
             var order = User.IsInRole("Admin") || User.IsInRole("Moderator") ?
-                await _context.Orders.Include(o => o.OrderProducts).ThenInclude(op => op.Product).FirstAsync(o => o.Id == orderId)
-                : user.Orders.FirstOrDefault(o => o.Id == orderId);
+                await _context.Orders.Include(o => o.OrderProducts).ThenInclude(op => op.Product).FirstAsync(o => o.Id == id)
+                : user.Orders.FirstOrDefault(o => o.Id == id);
 
             if (order is null) return NotFound();
             if (order.Status != OrderStatus.Processing) return BadRequest();
@@ -183,87 +173,9 @@ namespace ECommerceAPI.Controllers
             {
                 Deleter = user,
                 DeletedType = nameof(Order),
-                DeletedId = orderId
+                DeletedId = id
             });
             await _context.SaveChangesAsync();
-            return Ok();
-        }
-
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> NewReturnProductOrder(int orderId, int orderProductId, bool deliveryNeeded, int addressId, string returnReason, int quantityToReturn)
-        {
-            if (string.IsNullOrWhiteSpace(returnReason) || quantityToReturn < 1) return BadRequest();
-
-            var user = await _context.Users
-                .Include(u => u.Addresses)
-                .Include(u => u.Orders)
-                    .ThenInclude(o => o.OrderProducts)
-                        .ThenInclude(op => op.Product)
-                .FirstAsync(u => u.UserName == User.Identity!.Name);
-
-            var order = user.Orders.FirstOrDefault(o => o.Id == orderId);
-            if (order is null) return NotFound();
-            if (order.Status != OrderStatus.Delivered) return BadRequest();
-
-            var orderProduct = order.OrderProducts.FirstOrDefault(op => op.Id == orderProductId);
-            if (orderProduct is null) return NotFound();
-            if (order.CreatedDateTime + TimeSpan.FromDays(orderProduct.WarrantyDays) < DateTime.Now) return BadRequest();
-
-            var address = deliveryNeeded ? user.Addresses.FirstOrDefault(a => a.Id == addressId) : await _context.StoreAddresses.FindAsync(addressId);
-            if (address is null) return NotFound();
-
-            var returned = _context.ReturnProductOrders.Where(rpo => rpo.OrderProduct.Id == orderProduct.Id).Sum(rpo => rpo.Quantity);
-            if (quantityToReturn > orderProduct.Quantity - returned) return BadRequest();
-
-            var returnProductOrder = new ReturnProductOrder()
-            {
-                Order = order,
-                Status = ReturnStatus.Processing,
-                OrderProduct = orderProduct,
-                Address = address,
-                Quantity = quantityToReturn,
-                ReturnReason = returnReason,
-            };
-
-            _context.ReturnProductOrders.Add(returnProductOrder);
-            user.ReturnProductOrders.Add(returnProductOrder);
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
-
-            return Ok(returnProductOrder.Adapt<ReturnProductOrderResponse>());
-        }
-
-        [HttpDelete]
-        [Authorize]
-        public async Task<IActionResult> DeleteReturnProductOrder(int returnProductOrderId)
-        {
-            var user = await _context.Users
-                .Include(u => u.ReturnProductOrders)
-                .Include(u => u.Orders)
-                    .ThenInclude(o => o.OrderProducts)
-                        .ThenInclude(op => op.Product)
-                .FirstAsync(u => u.UserName == User.Identity!.Name);
-            var returnProductOrder = User.IsInRole("Admin") || User.IsInRole("Moderator") ?
-                await _context.ReturnProductOrders.Include(rpo => rpo.Order).ThenInclude(o => o.OrderProducts).ThenInclude(op => op.Product).FirstAsync(rpo => rpo.Id == returnProductOrderId)
-                : user.ReturnProductOrders.FirstOrDefault(rpo => rpo.Id == returnProductOrderId);
-
-            if (returnProductOrder is null) return NotFound();
-
-            if (returnProductOrder.Status == ReturnStatus.Returned || returnProductOrder.Status == ReturnStatus.Deleted)
-                return BadRequest();
-
-            returnProductOrder.DeletedDateTime = DateTime.Now;
-            returnProductOrder.Status = ReturnStatus.Deleted;
-            _context.ReturnProductOrders.Update(returnProductOrder);
-            _context.DeletesHistory.Add(new()
-            {
-                Deleter = user,
-                DeletedType = nameof(ReturnProductOrder),
-                DeletedId = returnProductOrderId
-            });
-            await _context.SaveChangesAsync();
-
             return Ok();
         }
     }

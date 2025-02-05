@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace ECommerceAPI.Models
 {
-    public class ReturnProductOrder
+    public class Return
     {
         [Key] public int Id { get; set; }
         public User? Transporter { get; set; }

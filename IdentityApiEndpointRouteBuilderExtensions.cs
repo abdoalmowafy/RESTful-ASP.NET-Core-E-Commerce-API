@@ -445,7 +445,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.Ok(user.Adapt<UserDetailedResponse>());
         });
 
-        accountGroup.MapGet("/IndexAddresses", async Task<Results<Ok<List<AddressResponse>>, NotFound>>
+        accountGroup.MapGet("/Address", async Task<Results<Ok<List<AddressResponse>>, NotFound>>
             (ClaimsPrincipal claimsPrincipal, [FromServices] IServiceProvider sp) =>
         {
             var dataContext = sp.GetRequiredService<DataContext>();
@@ -468,7 +468,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.Ok(addresses);
         });
 
-        accountGroup.MapPost("/AddAddress", async Task<Results<Ok<AddressResponse>, ValidationProblem, NotFound>>
+        accountGroup.MapPost("/Address", async Task<Results<Ok<AddressResponse>, ValidationProblem, NotFound>>
             (ClaimsPrincipal claimsPrincipal, [FromBody] AddressRequest request, [FromServices] IServiceProvider sp) =>
         {
             var dataContext = sp.GetRequiredService<DataContext>();
@@ -498,7 +498,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.Ok(userAddress.Adapt<AddressResponse>());
         });
 
-        accountGroup.MapPut("/EditAddress/{id}", async Task<Results<Ok<AddressResponse>, ValidationProblem, NotFound>>
+        accountGroup.MapPut("/Address/{id}", async Task<Results<Ok<AddressResponse>, ValidationProblem, NotFound>>
             (ClaimsPrincipal claimsPrincipal, int id, [FromBody] AddressRequest request, [FromServices] IServiceProvider sp) =>
         {
             var dataContext = sp.GetRequiredService<DataContext>();
@@ -533,7 +533,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.Ok(userAddress.Adapt<AddressResponse>());
         });
 
-        accountGroup.MapDelete("/DeleteAddress/{id}", async Task<Results<Ok<string>, NotFound>>
+        accountGroup.MapDelete("/Address/{id}", async Task<Results<Ok<string>, NotFound>>
             (ClaimsPrincipal claimsPrincipal, int id, [FromServices] IServiceProvider sp) =>
         {
             var dataContext = sp.GetRequiredService<DataContext>();
