@@ -1,5 +1,6 @@
 using DotNetEnv;
 using ECommerceAPI;
+using ECommerceAPI.Controllers;
 using ECommerceAPI.Data;
 using ECommerceAPI.Models;
 using Microsoft.AspNetCore.Identity;
@@ -24,6 +25,8 @@ builder.Services.AddDbContextFactory<DataContext>(options =>
 }, ServiceLifetime.Scoped);
 
 builder.Services.AddHttpClient();
+
+builder.Services.AddScoped<PaymobService>();
 
 builder.Services.AddControllers();
 

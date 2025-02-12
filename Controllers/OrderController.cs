@@ -15,13 +15,10 @@ namespace ECommerceAPI.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class OrderController(DataContext context, IConfiguration configuration, HttpClient httpClient) : ControllerBase
+    public class OrderController(DataContext context, PaymobService paymobService) : ControllerBase
     {
         private readonly DataContext _context = context;
-        private readonly HttpClient _httpClient = httpClient;
-        private readonly string ApiKey = configuration.GetSection("Paymob")["ApiKey"]!;
-        private readonly int IntegrationId = int.Parse(configuration.GetSection("Paymob")["IntegrationId"]!);
-        private readonly int IframeId = int.Parse(configuration.GetSection("Paymob")["Iframe1Id"]!);
+        private readonly PaymobService _paymobService = paymobService;
 
         [HttpGet]
         public async Task<IActionResult> IndexOrders(int pageIndex = 1)
@@ -132,14 +129,12 @@ namespace ECommerceAPI.Controllers
             }
             else if (request.PaymentMethod == PaymentMethod.CreditCard)
             {
-                var PaymobService = new PaymobService(_httpClient, configuration);
-                var payment_url = await PaymobService.PayAsync(order, request.Identifier);
+                var payment_url = await _paymobService.PayAsync(order, request.Identifier);
                 return Ok(new { payment_url });
             }
             else
             {
-                var PaymobService = new PaymobService(_httpClient, configuration);
-                var payment_url = await PaymobService.PayAsync(order, request.Identifier);
+                var payment_url = await _paymobService.PayAsync(order, request.Identifier);
                 return Ok(new { payment_url });
             }
         }
