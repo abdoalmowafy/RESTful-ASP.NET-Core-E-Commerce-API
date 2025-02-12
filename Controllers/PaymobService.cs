@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace ECommerceAPI.Controllers
 {
-    internal class PaymobService(HttpClient httpClient, IConfiguration configuration)
+    public class PaymobService(HttpClient httpClient, IConfiguration configuration)
     {
         private readonly HttpClient _httpClient = httpClient;
         private readonly IConfigurationSection _paymobConfig = configuration.GetRequiredSection("Paymob");
