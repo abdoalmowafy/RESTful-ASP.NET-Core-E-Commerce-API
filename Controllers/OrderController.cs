@@ -9,6 +9,9 @@ using ECommerceAPI.DTOs.Responses;
 using Microsoft.IdentityModel.Tokens;
 using Mapster;
 using ECommerceAPI.DTOs.Requests;
+using Azure.Core;
+using Microsoft.Identity.Client;
+using System.Net;
 
 namespace ECommerceAPI.Controllers
 {
@@ -71,53 +74,12 @@ namespace ECommerceAPI.Controllers
                 || (promo is not null && !promo.Active))
                 return BadRequest();
 
-            var address = request.DeliveryNeeded ? 
-                user.Addresses.FirstOrDefault(a => a.Id == request.AddressId) : 
+            var address = request.DeliveryNeeded ?
+                user.Addresses.FirstOrDefault(a => a.Id == request.AddressId) :
                 await _context.StoreAddresses.FindAsync(request.AddressId);
             if (address is null) return NotFound();
 
-            OrderStatus orderStatus = OrderStatus.Paying;
-            long Fee = request.DeliveryNeeded ? 5000L : 0L;
-            if (request.PaymentMethod == PaymentMethod.COD)
-            {
-                Fee += 1000;
-                orderStatus = OrderStatus.Processing;
-            }
-
-            // Creating Order Instance
-            long totalCentsNoPromo = 0;
-            var orderProducts = new List<OrderProduct>(cartProducts.Count);
-            foreach (var cartProduct in cartProducts)
-            {
-                var orderProduct = new OrderProduct
-                {
-                    Product = cartProduct.Product,
-                    ProductPriceCents = cartProduct.Product.PriceCents,
-                    SalePercent = cartProduct.Product.SalePercent,
-                    Quantity = cartProduct.Quantity,
-                    WarrantyDays = cartProduct.Product.WarrantyDays,
-                };
-                totalCentsNoPromo += cartProduct.Product.PriceCents * cartProduct.Quantity * (100 - cartProduct.Product.SalePercent) / 100;
-                _context.OrderProducts.Add(orderProduct);
-                orderProducts.Add(orderProduct);
-                cartProduct.Product.Quantity -= cartProduct.Quantity;
-                _context.Products.Update(cartProduct.Product);
-            }
-
-            Order order = new()
-            {
-                UserId = user.Id,
-                User = user,
-                PromoCode = promo,
-                PaymentMethod = request.PaymentMethod,
-                Status = orderStatus,
-                TotalCents = Fee + (promo is null ? totalCentsNoPromo
-                : promo.MaxSaleCents is null ? totalCentsNoPromo * (100 - promo.Percent) / 100
-                : totalCentsNoPromo - Math.Min(totalCentsNoPromo * promo.Percent / 100, promo.MaxSaleCents.Value)),
-                DeliveryNeeded = request.DeliveryNeeded,
-                OrderProducts = orderProducts,
-                Address = address
-            };
+            var order = CreateOrder(user, request, address);
 
             // Processing Order
             if (request.PaymentMethod == PaymentMethod.COD)
@@ -172,6 +134,56 @@ namespace ECommerceAPI.Controllers
             });
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        private Order CreateOrder(User user, OrderRequest request, Address address)
+        {
+            var cart = user.Cart;
+            var cartProducts = cart.CartProducts;
+            var promo = cart.PromoCode;
+
+            OrderStatus orderStatus = OrderStatus.Paying;
+            long Fee = request.DeliveryNeeded ? 5000L : 0L;
+            if (request.PaymentMethod == PaymentMethod.COD)
+            {
+                Fee += 1000;
+                orderStatus = OrderStatus.Processing;
+            }
+
+            // Creating Order Instance
+            long totalCentsNoPromo = 0;
+            var orderProducts = new List<OrderProduct>(cartProducts.Count);
+            foreach (var cartProduct in cartProducts)
+            {
+                var orderProduct = new OrderProduct
+                {
+                    Product = cartProduct.Product,
+                    ProductPriceCents = cartProduct.Product.PriceCents,
+                    SalePercent = cartProduct.Product.SalePercent,
+                    Quantity = cartProduct.Quantity,
+                    WarrantyDays = cartProduct.Product.WarrantyDays,
+                };
+                totalCentsNoPromo += cartProduct.Product.PriceCents * cartProduct.Quantity * (100 - cartProduct.Product.SalePercent) / 100;
+                _context.OrderProducts.Add(orderProduct);
+                orderProducts.Add(orderProduct);
+                cartProduct.Product.Quantity -= cartProduct.Quantity;
+                _context.Products.Update(cartProduct.Product);
+            }
+
+            return new Order
+            {
+                UserId = user.Id,
+                User = user,
+                PromoCode = promo,
+                PaymentMethod = request.PaymentMethod,
+                Status = orderStatus,
+                TotalCents = Fee + (promo is null ? totalCentsNoPromo
+                : promo.MaxSaleCents is null ? totalCentsNoPromo * (100 - promo.Percent) / 100
+                : totalCentsNoPromo - Math.Min(totalCentsNoPromo * promo.Percent / 100, promo.MaxSaleCents.Value)),
+                DeliveryNeeded = request.DeliveryNeeded,
+                OrderProducts = orderProducts,
+                Address = address
+            };
         }
     }
 }
