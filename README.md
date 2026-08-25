@@ -115,6 +115,7 @@ dotnet user-secrets set "Paymob:HmacSecret" "..."    # callback signature verifi
 | Tracking | SignalR hub `/hubs/tracking` — `JoinOrder(orderId)` → `orderStatusChanged`, `driverLocationChanged` |
 | Payments | `payments/paymob/callback` |
 | Returns | `returns`, `returns/order-products/{id}` |
+| Push tokens | `notifications/device-tokens` (POST register/upsert, GET my devices, DELETE unregister) |
 | Seller | `seller/store` (GET/POST/PUT), `seller/products` (CRUD+stock), `seller/order-items` |
 | Admin catalog | `admin/products`, `admin/categories`, `admin/promo-codes`, `admin/store-addresses` |
 | Admin ordering | `admin/orders`, `admin/returns` (+ `/status`, `/transporter`) |
@@ -128,10 +129,16 @@ dotnet user-secrets set "Paymob:HmacSecret" "..."    # callback signature verifi
 
 ## Testing
 
-67 xUnit unit tests (`ECommerce.UnitTests`) run services against EF InMemory with real ASP.NET Identity: auth flows, profile & password rules, cart/promo math, checkout fees + stock + cart clearing, review purchase-guards, Paymob HMAC verification, dashboard aggregation, seller store lifecycle & cross-store isolation, driver application workflow, customer suspension, permissions catalog integrity, Result invariants, audit tracking, and optimistic-concurrency behavior.
+Two layers, **97 xUnit tests** total (`ECommerce.UnitTests`):
+
+**Unit tests (82)** — services against EF InMemory with real ASP.NET Identity: auth flows, refresh-token rotation/grace/reuse-detection, OTP challenge rules, profile & password rules, cart/promo math, checkout fees + stock + cart clearing, review purchase-guards, Paymob HMAC verification, dashboard aggregation, seller store lifecycle & cross-store isolation, driver application workflow, customer suspension, device-token registry upsert/prune, permissions catalog integrity, Result invariants, audit tracking.
+
+**Integration tests (15)** — `ApiFactory` boots the real host (every module wired) against throwaway PostgreSQL databases:
+- AuthzMatrixTests — anonymous/5-role coverage over every protected route family (401 vs 200 vs 403)
+- MoneyPathSmokeTests — register → confirm → login → cart → COD checkout end-to-end over real HTTP
 
 ```bash
-dotnet test
+dotnet test   # integration tier requires the docker compose PostgreSQL + Redis running
 ```
 
 ## Architecture Decision Records
