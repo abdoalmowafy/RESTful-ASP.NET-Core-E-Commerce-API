@@ -9,6 +9,7 @@ using ECommerce.Infrastructure.Persistence;
 using Customer.Management;
 using Customer.Profile;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
 using System.Threading.RateLimiting;
@@ -25,6 +26,31 @@ using Driver.Profile;
 using Shopping.Customer;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Behind a trusted reverse proxy only. Cleared so container/proxy IPs are honoured in staging too.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// Fail fast on missing production configuration
+if (!builder.Environment.IsDevelopment())
+{
+    var failures = new List<string>();
+
+    var jwtKey = builder.Configuration["Jwt:Key"];
+    if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+        failures.Add("Jwt:Key must be set to at least 32 characters");
+
+    if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("DefaultConnection")))
+        failures.Add("ConnectionStrings:DefaultConnection is required");
+
+    if (failures.Count > 0)
+        throw new InvalidOperationException(
+            "Startup configuration invalid:" + Environment.NewLine + string.Join(Environment.NewLine, failures));
+}
 
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(ECommerce.Authentication.Controllers.AuthenticationController).Assembly)
@@ -175,6 +201,7 @@ if (app.Environment.IsDevelopment())
     }
 }
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 
 app.UseExceptionHandler();

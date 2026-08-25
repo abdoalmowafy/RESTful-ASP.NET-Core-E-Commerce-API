@@ -1,4 +1,5 @@
 using Ordering.Customer.Contracts;
+using Npgsql;
 using Ordering.Customer.Services;
 
 namespace Ordering.Customer.Services;
@@ -127,7 +128,17 @@ public class OrdersService(AppDbContext context, IPaymobService paymobService, I
         if (request.PaymentMethod != PaymentMethod.COD)
             order.RecordStatus("Awaiting online payment");
         _context.Orders.Add(order);
-        await _context.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" })
+        {
+            // Lost a race against a concurrent checkout — the partial unique
+            // index ux_orders_one_active_per_user is the source of truth.
+            return Result.Failure<CheckoutResponse>(OrderingErrors.Order.OngoingExists);
+        }
 
         foreach (var cartProduct in cartProducts)
             cartProduct.Product!.Quantity -= cartProduct.Quantity;

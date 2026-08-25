@@ -52,6 +52,9 @@ public class RolesManagementService(
         if (role is null)
             return Result.Failure<RoleResponse>(AuthErrors.RoleNotFound);
 
+        if (string.Equals(role!.Name, DefaultRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase))
+            return Result.Failure<RoleResponse>(Error.Forbidden("Roles.SuperAdminImmutable", "SuperAdmin permissions cannot be modified"));
+
         var existing = await _roleManager.GetClaimsAsync(role);
         foreach (var claim in existing.Where(c => c.Type == "permission"))
             await _roleManager.RemoveClaimAsync(role, claim);

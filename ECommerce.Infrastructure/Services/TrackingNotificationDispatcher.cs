@@ -52,7 +52,7 @@ public class TrackingNotificationDispatcher(
             await _deviceTokenService.RemoveDeadTokensAsync(dead);
     }
 
-    // High-frequency by design: live map feed stays SignalR-only.
-    public Task NotifyDriverLocationAsync(int orderId, double latitude, double longitude, DateTime recordedAt, int? etaMinutes)
-        => Task.CompletedTask;
+    // Live map feed: SignalR broadcast; intentionally no push (too chatty for FCM).
+    public async Task NotifyDriverLocationAsync(int orderId, double latitude, double longitude, DateTime recordedAt, int? etaMinutes)
+        => await _signalR.NotifyDriverLocationAsync(orderId, latitude, longitude, recordedAt, etaMinutes);
 }

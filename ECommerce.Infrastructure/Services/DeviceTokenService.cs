@@ -53,7 +53,24 @@ public class DeviceTokenService(AppDbContext context) : IDeviceTokenService
             });
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+                try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { SqlState: "23505" })
+        {
+            // Lost the upsert race — the concurrent insert won. Refresh ours and fall through.
+            _context.ChangeTracker.Clear();
+            existing = await _context.DeviceTokens.FirstAsync(t => t.Token == token, cancellationToken);
+            existing.OwnerType = ownerType;
+            existing.OwnerId = ownerId;
+            existing.Platform = platform;
+            existing.DeviceName = deviceName;
+            existing.MarkRegistered();
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+await _context.SaveChangesAsync(cancellationToken);
 
         var id = existing?.Id
             ?? await _context.DeviceTokens.Where(t => t.Token == token).Select(t => t.Id).FirstAsync(cancellationToken);

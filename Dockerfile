@@ -9,8 +9,16 @@ COPY Catalog.Management/Catalog.Management.csproj Catalog.Management/
 COPY Shopping.Customer/Shopping.Customer.csproj Shopping.Customer/
 COPY Ordering.Customer/Ordering.Customer.csproj Ordering.Customer/
 COPY Ordering.Management/Ordering.Management.csproj Ordering.Management/
-COPY Ordering.Transporter/Ordering.Transporter.csproj Ordering.Transporter/
-COPY Users.Management/Users.Management.csproj Users.Management/
+COPY Admin.Management/Admin.Management.csproj Admin.Management/
+COPY Admin.Profile/Admin.Profile.csproj Admin.Profile/
+COPY Customer.Management/Customer.Management.csproj Customer.Management/
+COPY Customer.Profile/Customer.Profile.csproj Customer.Profile/
+COPY Seller.Management/Seller.Management.csproj Seller.Management/
+COPY Seller.Profile/Seller.Profile.csproj Seller.Profile/
+COPY Driver.Management/Driver.Management.csproj Driver.Management/
+COPY Driver.Profile/Driver.Profile.csproj Driver.Profile/
+COPY Roles.Management/Roles.Management.csproj Roles.Management/
+COPY Notifications/Notifications.csproj Notifications/
 COPY Store.API/Store.API.csproj Store.API/
 
 RUN dotnet restore Store.API/Store.API.csproj

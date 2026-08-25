@@ -223,7 +223,7 @@ public class CatalogService(AppDbContext context) : ICatalogService
     /// </summary>
     private IQueryable<Product> BuildTrigramStage(string keyword)
     {
-        var like = $"%{keyword}%";
+        var like = $"%{keyword.EscapeLikePattern()}%";
 
         return _context.Products
             .FromSqlInterpolated($"""
@@ -245,7 +245,7 @@ public class CatalogService(AppDbContext context) : ICatalogService
 
     private static IQueryable<Product> WithLikeSearch(IQueryable<Product> products, string keyword)
     {
-        var pattern = $"%{keyword}%";
+        var pattern = $"%{keyword.EscapeLikePattern()}%";
 
         return products.Where(p =>
             EF.Functions.ILike(p.Name!, pattern) ||
