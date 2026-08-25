@@ -62,6 +62,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     {
         var users = sp.GetRequiredService<UserManager<ApplicationUser>>();
         var roles = sp.GetRequiredService<RoleManager<ApplicationRole>>();
+        var db = sp.GetRequiredService<AppDbContext>();
 
         foreach (var (name, perms) in new Dictionary<string, string[]>
         {
@@ -110,6 +111,38 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
             Assert.True((await users.CreateAsync(user, "Passw0rd!")).Succeeded);
             await users.AddToRoleAsync(user, role);
+
+            switch (role)
+            {
+                case DefaultRoles.Customer:
+                    user.CustomerProfile = new CustomerProfile { Id = user.Id };
+                    break;
+
+                case DefaultRoles.Seller:
+                    var store = new Store
+                    {
+                        OwnerId = user.Id,
+                        Name = $"{firstName} Store",
+                        Slug = $"store-{user.Id[..8]}",
+                        Status = StoreStatus.Active
+                    };
+                    db.Stores.Add(store);
+                    await db.SaveChangesAsync();
+                    user.SellerProfile = new SellerProfile { Id = user.Id, StoreId = store.Id };
+                    break;
+
+                case DefaultRoles.Driver:
+                    user.DriverProfile = new DriverProfile
+                    {
+                        Id = user.Id,
+                        Status = DriverStatus.Active,
+                        PlateNumber = "TST 0001",
+                        LicenseNumber = "DL-0001"
+                    };
+                    break;
+            }
+
+            await users.UpdateAsync(user);
         }
     }
 

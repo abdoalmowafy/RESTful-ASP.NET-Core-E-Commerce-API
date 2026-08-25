@@ -26,7 +26,7 @@ public class DriverProfileController(IDriverProfileService profileService) : Con
     }
 
     [HttpPut]
-    [Authorize(Roles = DefaultRoles.Driver)]
+    [Authorize(Policy = PolicyNames.PendingDriver)]
     public async Task<IActionResult> Resubmit([FromBody] ApplyDriverRequest request, CancellationToken cancellationToken)
     {
         var result = await _profileService.ResubmitAsync(User.GetUserId(), request, cancellationToken);

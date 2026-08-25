@@ -27,7 +27,7 @@ public class AuthServiceTests : IDisposable
             ExpiryMinutes = 60
         });
 
-        return new AuthService(_users, new JwtProvider(jwtOptions, _users));
+        return new AuthService(_users, new JwtProvider(jwtOptions, _users, _sp.GetRequiredService<AppDbContext>()));
     }
 
     private async Task<ApplicationUser> SeedUserAsync(

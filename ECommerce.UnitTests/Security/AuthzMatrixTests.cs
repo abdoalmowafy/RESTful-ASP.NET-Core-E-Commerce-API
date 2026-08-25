@@ -19,7 +19,38 @@ public class AuthzMatrixTests : IClassFixture<ApiFactory>, IAsyncLifetime
 
     public AuthzMatrixTests(ApiFactory factory) => _factory = factory;
 
-    public Task InitializeAsync() => _factory.InitializeDatabaseAsync();
+    public Task InitializeAsync() => _factory.InitializeDatabaseAsync(seed =>
+    {
+        var users = seed.GetRequiredService<UserManager<ApplicationUser>>();
+        var seller = users.FindByEmailAsync("seller@matrix.test").GetAwaiter().GetResult();
+        if (seller is null) return;
+
+        var db = seed.GetRequiredService<AppDbContext>();
+        if (!db.Stores.Any(s => s.OwnerId == seller.Id))
+        {
+            db.Stores.Add(new Store
+            {
+                OwnerId = seller.Id,
+                Name = "Matrix Store",
+                Slug = $"matrix-{seller.Id[..8]}",
+                Status = StoreStatus.Active
+            });
+            db.SellerProfiles.Add(new SellerProfile { Id = seller.Id, StoreId = 0 });
+        }
+
+        if (!db.CustomerProfiles.Any(p => p.Id == "seed-customer"))
+        {
+            // no-op placeholder; customer profile created at registration
+        }
+        db.SaveChanges();
+
+        var sp = db.SellerProfiles.FirstOrDefault(x => x.Id == seller.Id);
+        if (sp is not null && sp.StoreId == 0)
+        {
+            sp.StoreId = db.Stores.First(s => s.OwnerId == seller.Id).Id;
+            db.SaveChanges();
+        }
+    });
 
     public static IEnumerable<(string Label, string Method, string Path)> ProtectedRoutes()
     {

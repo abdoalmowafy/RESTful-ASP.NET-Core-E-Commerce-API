@@ -4,7 +4,7 @@ namespace Driver.Profile.Controllers;
 
 [Route("driver/orders")]
 [ApiController]
-[Authorize(Roles = DefaultRoles.Driver)]
+[Authorize(Policy = PolicyNames.ActiveDriver)]
 public class DriverLocationController(IDriverLocationService locationService) : ControllerBase
 {
     private readonly IDriverLocationService _locationService = locationService;

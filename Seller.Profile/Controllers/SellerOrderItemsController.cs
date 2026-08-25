@@ -5,7 +5,7 @@ namespace Seller.Profile.Controllers;
 
 [Route("seller/order-items")]
 [ApiController]
-[Authorize(Roles = DefaultRoles.Seller)]
+[Authorize(Policy = PolicyNames.ActiveSeller)]
 public class SellerOrderItemsController(ISellerOrderService orderService) : ControllerBase
 {
     private readonly ISellerOrderService _orderService = orderService;

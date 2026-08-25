@@ -1,12 +1,26 @@
 using ECommerce.Infrastructure.Entities;
+using ECommerce.Infrastructure.Entities.Enums;
+using ECommerce.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace ECommerce.Authentication.Jwt;
 
-public class JwtProvider(IOptions<JwtOptions> options, UserManager<ApplicationUser> userManager) : IJwtProvider
+/// <summary>
+/// Issues access tokens carrying the user's CURRENT profile statuses as claims
+/// (cliniq-style doctor_status/patient_status → here customer/seller/driver/store).
+/// Claims refresh on next login or token rotation — status changes made after
+/// issuance take effect once the client rotates its token.
+/// </summary>
+public class JwtProvider(
+    IOptions<JwtOptions> options,
+    UserManager<ApplicationUser> userManager,
+    AppDbContext dbContext) : IJwtProvider
 {
     private readonly JwtOptions _options = options.Value;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly AppDbContext _dbContext = dbContext;
 
     public async Task<(string Token, int ExpiresIn)> GenerateTokenAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
@@ -25,6 +39,41 @@ public class JwtProvider(IOptions<JwtOptions> options, UserManager<ApplicationUs
 
         foreach (var role in roles)
             claims.Add(new Claim("roles", role));
+
+        if (roles.Contains(DefaultRoles.Customer))
+        {
+            var status = await _dbContext.CustomerProfiles
+                .AsNoTracking()
+                .Where(p => p.Id == user.Id)
+                .Select(p => p.Status)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            claims.Add(new Claim("customer_status", status.ToString()));
+        }
+
+        if (roles.Contains(DefaultRoles.Seller))
+        {
+            var storeStatus = await _dbContext.Stores
+                .AsNoTracking()
+                .Where(s => s.OwnerId == user.Id && s.DeletedAt == null)
+                .Select(s => (StoreStatus?)s.Status)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            claims.Add(new Claim("store_status",
+                (storeStatus ?? StoreStatus.PendingVerification).ToString()));
+        }
+
+        if (roles.Contains(DefaultRoles.Driver))
+        {
+            var driverStatus = await _dbContext.DriverProfiles
+                .AsNoTracking()
+                .Where(p => p.Id == user.Id)
+                .Select(p => (DriverStatus?)p.Status)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            claims.Add(new Claim("driver_status",
+                (driverStatus ?? DriverStatus.PendingVerification).ToString()));
+        }
 
         var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key));
         var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);

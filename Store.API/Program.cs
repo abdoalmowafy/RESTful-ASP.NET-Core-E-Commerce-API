@@ -31,7 +31,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     // Behind a trusted reverse proxy only. Cleared so container/proxy IPs are honoured in staging too.
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
@@ -200,10 +200,9 @@ if (app.Environment.IsDevelopment())
         };
     });
 
-    using (var scope = app.Services.CreateScope())
-    {
-        await DbSeeder.SeedAsync(scope.ServiceProvider);
-    }
+    using var scope = app.Services.CreateScope();
+
+    await DbSeeder.SeedAsync(scope.ServiceProvider);
 }
 
 app.UseForwardedHeaders();
@@ -249,5 +248,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-
-public partial class Program;

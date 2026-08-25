@@ -29,7 +29,7 @@ public class DriverApplicationsController(IDriverApplicationService applicationS
     }
 
     [HttpPut("resubmit")]
-    [Authorize(Roles = DefaultRoles.Driver)]
+    [Authorize(Policy = PolicyNames.PendingDriver)]
     public async Task<IActionResult> Resubmit(
         [FromForm] ApplyDriverForm form,
         CancellationToken cancellationToken)

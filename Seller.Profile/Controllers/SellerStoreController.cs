@@ -10,7 +10,7 @@ public class SellerStoreController(ISellerStoreService storeService) : Controlle
     private readonly ISellerStoreService _storeService = storeService;
 
     [HttpGet]
-    [Authorize(Roles = DefaultRoles.Seller)]
+    [Authorize(Policy = PolicyNames.ActiveSeller)]
     public async Task<IActionResult> GetMine(CancellationToken cancellationToken)
     {
         var result = await _storeService.GetMineAsync(User.GetUserId(), cancellationToken);
@@ -28,7 +28,7 @@ public class SellerStoreController(ISellerStoreService storeService) : Controlle
     }
 
     [HttpPut]
-    [Authorize(Roles = DefaultRoles.Seller)]
+    [Authorize(Policy = PolicyNames.ActiveSeller)]
     public async Task<IActionResult> Update([FromBody] UpsertStoreRequest request, CancellationToken cancellationToken)
     {
         var result = await _storeService.UpdateAsync(User.GetUserId(), request, cancellationToken);

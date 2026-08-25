@@ -1,6 +1,7 @@
 using ECommerce.Authentication.Authorization;
 using ECommerce.Authentication.Jwt;
 using ECommerce.Authentication.Services;
+using ECommerce.Infrastructure.Entities.Enums;
 using ECommerce.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -58,6 +59,36 @@ public static class DependencyInjection
         });
 
         services.AddAuthorization();
+
+services.AddAuthorization(options =>
+        {
+            options.AddPolicy(PolicyNames.VerifiedUser, policy =>
+                policy.RequireAuthenticatedUser()
+                      .AddRequirements(new VerifiedUserRequirement()));
+
+            options.AddPolicy(PolicyNames.ActiveCustomer, policy =>
+                policy.RequireAuthenticatedUser()
+                      .AddRequirements(new ProfileStatusRequirement(ProfileClaims.CustomerStatus,
+                          ProfileStatus.Active.ToString())));
+
+            options.AddPolicy(PolicyNames.ActiveSeller, policy =>
+                policy.RequireAuthenticatedUser()
+                      .AddRequirements(new ProfileStatusRequirement(ProfileClaims.StoreStatus,
+                          StoreStatus.Active.ToString())));
+
+            options.AddPolicy(PolicyNames.PendingDriver, policy =>
+                policy.RequireAuthenticatedUser()
+                      .AddRequirements(new ProfileStatusRequirement(ProfileClaims.DriverStatus,
+                          DriverStatus.PendingVerification.ToString(), DriverStatus.Rejected.ToString())));
+
+            options.AddPolicy(PolicyNames.ActiveDriver, policy =>
+                policy.RequireAuthenticatedUser()
+                      .AddRequirements(new ProfileStatusRequirement(ProfileClaims.DriverStatus,
+                          DriverStatus.Active.ToString())));
+        });
+
+        services.AddScoped<IAuthorizationHandler, VerifiedUserHandler>();
+        services.AddScoped<IAuthorizationHandler, ProfileStatusHandler>();
 
         services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();

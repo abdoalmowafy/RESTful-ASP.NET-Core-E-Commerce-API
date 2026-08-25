@@ -4,7 +4,7 @@ namespace Driver.Profile.Controllers;
 
 [Route("driver/deliveries")]
 [ApiController]
-[Authorize(Roles = DefaultRoles.Driver)]
+[Authorize(Policy = PolicyNames.ActiveDriver)]
 public class DeliveriesController(IDeliveryService deliveryService) : ControllerBase
 {
     private readonly IDeliveryService _deliveryService = deliveryService;
