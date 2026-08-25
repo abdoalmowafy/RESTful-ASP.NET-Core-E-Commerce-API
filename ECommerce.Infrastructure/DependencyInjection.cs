@@ -70,11 +70,16 @@ public static class DependencyInjection
         services.AddScoped<IDriverLocationService, DriverLocationService>();
         services.AddScoped<IOtpChallengeService, OtpChallengeService>();
 
+        services.Configure<FileStorageOptions>(configuration.GetSection(FileStorageOptions.SectionName));
+        services.AddScoped<IFileStorage, LocalFileStorage>();
+
         services.Configure<SmtpSettings>(configuration.GetSection(SmtpSettings.SectionName));
         services.AddScoped<INotificationDelivery, NotificationDeliveryService>();
 
         services.AddSignalR();
         services.Configure<FcmSettings>(configuration.GetSection(FcmSettings.SectionName));
+        services.Configure<DataRetentionOptions>(configuration.GetSection(DataRetentionOptions.SectionName));
+        services.AddHostedService<DataRetentionBackgroundService>();
         services.AddSingleton<IPushSender, FirebasePushSender>();
         services.AddScoped<IDeviceTokenService, DeviceTokenService>();
         services.AddScoped<IOrderTrackingNotifier, TrackingNotificationDispatcher>();

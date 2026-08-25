@@ -1,6 +1,6 @@
-using Driver.Profile.Contracts;
-using Microsoft.AspNetCore.Hosting;
+using ECommerce.Infrastructure.Entities.Enums;
 
+using Driver.Profile.Contracts;
 namespace Driver.Profile.Services;
 
 public interface IDriverApplicationService
@@ -10,25 +10,17 @@ public interface IDriverApplicationService
     Task<Result<IReadOnlyList<DriverProfileResponse>>> GetPendingRequestsAsync(CancellationToken cancellationToken = default);
 }
 
-public record ApplyDriverForm(
-    VehicleType VehicleType,
-    string PlateNumber,
-    string LicenseNumber,
-    IFormFile? LicenseImage,
-    IFormFile? VehicleRegistration,
-    IFormFile? NationalId);
-
 public class DriverApplicationService(
     AppDbContext context,
     UserManager<ApplicationUser> userManager,
-    IWebHostEnvironment environment) : IDriverApplicationService
+    IFileStorage fileStorage) : IDriverApplicationService
 {
-    private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".pdf"];
+    private static readonly string[] AllowedDocExtensions = [".jpg", ".jpeg", ".png", ".pdf"];
+    private const long MaxDocBytes = 8 * 1024 * 1024;
+
     private readonly AppDbContext _context = context;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
-    private readonly string _docsFolder = Path.Combine(
-        environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
-        "media", "drivers");
+    private readonly IFileStorage _fileStorage = fileStorage;
 
     public async Task<Result<DriverProfileResponse>> ApplyAsync(string userId, ApplyDriverForm form, CancellationToken cancellationToken = default)
     {
@@ -41,18 +33,21 @@ public class DriverApplicationService(
 
         await _userManager.AddToRoleAsync(user, DefaultRoles.Driver);
 
+        var docs = await SaveDocsAsync(userId, form, cancellationToken);
+        if (docs.IsFailure)
+            return Result.Failure<DriverProfileResponse>(docs.Error);
+
         var profile = new DriverProfile
         {
             Id = user.Id,
             Status = DriverStatus.PendingVerification,
             VehicleType = form.VehicleType,
             PlateNumber = form.PlateNumber.Trim(),
-            LicenseNumber = form.LicenseNumber.Trim()
+            LicenseNumber = form.LicenseNumber.Trim(),
+            LicenseImageUrl = docs.Value.LicenseImageUrl,
+            VehicleRegistrationUrl = docs.Value.VehicleRegistrationUrl,
+            NationalIdUrl = docs.Value.NationalIdUrl
         };
-
-        profile.LicenseImageUrl = await SaveDocAsync(form.LicenseImage, $"license-{userId[..8]}");
-        profile.VehicleRegistrationUrl = await SaveDocAsync(form.VehicleRegistration, $"registration-{userId[..8]}");
-        profile.NationalIdUrl = await SaveDocAsync(form.NationalId, $"nationalid-{userId[..8]}");
 
         user.DriverProfile = profile;
         await _userManager.UpdateAsync(user);
@@ -73,20 +68,18 @@ public class DriverApplicationService(
             return Result.Failure<DriverProfileResponse>(MarketplaceErrors.DriverProfile.NotEditable);
 
         var profile = user.DriverProfile;
+        var docs = await SaveDocsAsync(userId, form, cancellationToken);
+        if (docs.IsFailure)
+            return Result.Failure<DriverProfileResponse>(docs.Error);
+
         profile.VehicleType = form.VehicleType;
         profile.PlateNumber = form.PlateNumber.Trim();
         profile.LicenseNumber = form.LicenseNumber.Trim();
         profile.Status = DriverStatus.PendingVerification;
         profile.RejectionReason = null;
-
-        var license = await SaveDocAsync(form.LicenseImage, $"license-{userId[..8]}");
-        if (license is not null) profile.LicenseImageUrl = license;
-
-        var registration = await SaveDocAsync(form.VehicleRegistration, $"registration-{userId[..8]}");
-        if (registration is not null) profile.VehicleRegistrationUrl = registration;
-
-        var nationalId = await SaveDocAsync(form.NationalId, $"nationalid-{userId[..8]}");
-        if (nationalId is not null) profile.NationalIdUrl = nationalId;
+        profile.LicenseImageUrl = docs.Value.LicenseImageUrl ?? profile.LicenseImageUrl;
+        profile.VehicleRegistrationUrl = docs.Value.VehicleRegistrationUrl ?? profile.VehicleRegistrationUrl;
+        profile.NationalIdUrl = docs.Value.NationalIdUrl ?? profile.NationalIdUrl;
 
         await _userManager.UpdateAsync(user);
         return Result.Succeed(ToResponse(user));
@@ -113,22 +106,33 @@ public class DriverApplicationService(
         return Result.Succeed<IReadOnlyList<DriverProfileResponse>>(pending);
     }
 
-    private async Task<string?> SaveDocAsync(IFormFile? file, string baseName)
+    private async Task<Result<(string? LicenseImageUrl, string? VehicleRegistrationUrl, string? NationalIdUrl)>> SaveDocsAsync(
+        string userId,
+        ApplyDriverForm form,
+        CancellationToken ct)
+    {
+        try
+        {
+            var folder = $"media/drivers/{userId[..8]}";
+            var license = await SaveOneAsync(form.LicenseImage, folder, ct);
+            var registration = await SaveOneAsync(form.VehicleRegistration, folder, ct);
+            var nationalId = await SaveOneAsync(form.NationalId, folder, ct);
+
+            return Result.Succeed((license, registration, nationalId));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Failure<(string?, string?, string?)>(Error.BadRequest("Driver.InvalidDocument", ex.Message));
+        }
+    }
+
+    private async Task<string?> SaveOneAsync(IFormFile? file, string folder, CancellationToken ct)
     {
         if (file is null || file.Length == 0)
             return null;
 
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!AllowedExtensions.Contains(extension))
-            throw new InvalidOperationException($"Unsupported document type '{extension}'");
-
-        Directory.CreateDirectory(_docsFolder);
-        var fileName = $"{baseName}-{Guid.NewGuid():N}{extension}";
-
-        await using var stream = File.Create(Path.Combine(_docsFolder, fileName));
-        await file.CopyToAsync(stream);
-
-        return $"/media/drivers/{fileName}";
+        var saved = await _fileStorage.SaveAllAsync([file], folder, MaxDocBytes, AllowedDocExtensions, ct);
+        return saved[0].Url;
     }
 
     private static DriverProfileResponse ToResponse(ApplicationUser u)

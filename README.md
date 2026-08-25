@@ -64,6 +64,8 @@ Adding a future audience is copy-paste: new profile entity + config + module pai
 - **Audit trail** — automatic field-level `EditHistory` for `IHasEditHistory` entities; soft-deletes logged in `DeleteHistory`.
 - **Validation** — FluentValidation validators auto-enforced (SharpGrip).
 - **Payments** — typed HttpClient Paymob integration + HMAC-SHA512 verified webhook that flips `Paying → Processing` and clears the cart.
+- **Data retention** — `DataRetentionBackgroundService` purges consumed OTPs, expired/revoked refresh tokens, stale device tokens and old search telemetry on a 24h timer (config under `DataRetention`).
+- **Uploads** — product media ≤10 MB/file, driver documents ≤8 MB/file, extension whitelisted, stored via a central `IFileStorage` (local disk now; blob storage is a drop-in swap).
 - **Live tracking** — SignalR hub `/hubs/tracking` (JWT via `access_token`; anonymous connections aborted on connect). Customers `JoinOrder(orderId)` after an ownership check and receive `orderStatusChanged` + `driverLocationChanged` events pushed by every status transition. Drivers stream positions with `POST /api/driver/orders/{id}/location` (assigned-driver only); last ping lives in Redis (15-min TTL) and is also available via REST at `GET /api/orders/{id}/driver-location`, which includes a haversine-based ETA to the delivery address (`Address.Latitude/Longitude`).
 
 Money is stored as integer cents (`bigint`). **Database: PostgreSQL 17** (Npgsql EF Core provider) with native `xmin` optimistic-concurrency tokens and GIN-backed full-text search over products. Order status changes append `OrderStatusEvent` timeline rows.
@@ -131,3 +133,7 @@ dotnet user-secrets set "Paymob:HmacSecret" "..."    # callback signature verifi
 ```bash
 dotnet test
 ```
+
+## Architecture Decision Records
+
+See [docs/adr](docs/adr) — modular monolith, PostgreSQL migration, Result pattern, xmin concurrency.

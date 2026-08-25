@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
+
 using Seller.Profile.Contracts;
 
 namespace Seller.Profile.Services;
@@ -12,14 +12,12 @@ public interface ISellerProductService
     Task<Result> DeleteAsync(string ownerId, int productId, ClaimsPrincipal actor, CancellationToken cancellationToken = default);
 }
 
-public class SellerProductService(AppDbContext context, IWebHostEnvironment environment) : ISellerProductService
+public class SellerProductService(AppDbContext context, IFileStorage fileStorage) : ISellerProductService
 {
     private static readonly string[] AllowedMediaExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm", ".mov"];
 
     private readonly AppDbContext _context = context;
-    private readonly string _mediaFolder = Path.Combine(
-        environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
-        "media", "products");
+    private readonly IFileStorage _fileStorage = fileStorage;
 
     public async Task<Result<Store?>> GetActiveStoreAsync(string ownerId, CancellationToken cancellationToken)
     {
@@ -81,8 +79,9 @@ public class SellerProductService(AppDbContext context, IWebHostEnvironment envi
             WarrantyDays = request.WarrantyDays
         };
 
-        foreach (var url in await SaveMediaAsync(media))
-            product.Media.Add(new ProductMedia { Url = url });
+        var savedFiles = await fileStorage.SaveAllAsync(media, "media/products", 10 * 1024 * 1024, AllowedMediaExtensions, cancellationToken);
+        foreach (var f in savedFiles)
+            product.Media.Add(new ProductMedia { Url = f.Url });
 
         _context.Products.Add(product);
         await _context.SaveChangesAsync(cancellationToken);
@@ -165,24 +164,6 @@ public class SellerProductService(AppDbContext context, IWebHostEnvironment envi
 
         await _context.SaveChangesAsync(cancellationToken);
         return Result.Succeed();
-    }
-
-    private async Task<List<string>> SaveMediaAsync(IList<IFormFile> media)
-    {
-        var urls = new List<string>();
-        foreach (var file in media)
-        {
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!AllowedMediaExtensions.Contains(extension) || file.Length == 0)
-                continue;
-
-            Directory.CreateDirectory(_mediaFolder);
-            var fileName = $"{Guid.NewGuid():N}{extension}";
-            await using var stream = File.Create(Path.Combine(_mediaFolder, fileName));
-            await file.CopyToAsync(stream);
-            urls.Add($"/media/products/{fileName}");
-        }
-        return urls;
     }
 
     private static SellerProductResponse ToResponse(Product p)

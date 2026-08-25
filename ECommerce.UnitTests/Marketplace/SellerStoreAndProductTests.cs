@@ -1,4 +1,9 @@
 using ECommerce.UnitTests.Infrastructure;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Seller.Profile.Contracts;
 using Seller.Profile.Services;
 
@@ -36,7 +41,12 @@ public class SellerStoreAndProductTests : IDisposable
     {
         await _db.Categories.AddAsync(TestData.Category());
         await _db.SaveChangesAsync();
-        return new SellerProductService(_db, new FakeWebHostEnvironment());
+
+        var storageRoot = Path.Combine(Path.GetTempPath(), $"ec-seller-{Guid.NewGuid():N}");
+        IHostEnvironment env = new FakeWebHostEnvironment { ContentRootPath = AppContext.BaseDirectory, WebRootPath = storageRoot };
+        var storage = new LocalFileStorage((IWebHostEnvironment)env, Options.Create(new FileStorageOptions { RootPath = storageRoot }));
+
+        return new SellerProductService(_db, storage);
     }
 
     [Fact]

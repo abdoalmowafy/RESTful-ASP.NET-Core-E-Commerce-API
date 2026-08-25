@@ -70,23 +70,28 @@ builder.Services.AddControllers()
     .AddApplicationPart(typeof(Roles.Management.DependencyInjection).Assembly)
     .AddApplicationPart(typeof(Notifications.DependencyInjection).Assembly);
 
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
+var allowAllOrigins = builder.Environment.IsDevelopment() || allowedOrigins.Contains("*");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("StoreCorsPolicy", policy =>
     {
-        if (allowedOrigins is { Length: > 0 } && !allowedOrigins.Contains("*"))
-        {
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        }
-        else
+        if (allowAllOrigins)
         {
             policy.SetIsOriginAllowed(_ => true)
                   .AllowAnyMethod()
                   .AllowAnyHeader();
         }
+        else if (allowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .SetIsOriginAllowedToAllowWildcardSubdomains()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
+        // Production with no configured origins => cross-origin browser calls are denied.
+        // Mobile apps and server-to-server clients are unaffected by CORS.
     });
 });
 

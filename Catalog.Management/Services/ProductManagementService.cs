@@ -1,5 +1,4 @@
 using Catalog.Management.Contracts;
-using Microsoft.AspNetCore.Hosting;
 
 namespace Catalog.Management.Services;
 
@@ -13,13 +12,12 @@ public interface IProductManagementService
     Task<Result> DeleteAsync(int id, ClaimsPrincipal actor, CancellationToken cancellationToken = default);
 }
 
-public class ProductManagementService(AppDbContext context, IWebHostEnvironment environment) : IProductManagementService
+public class ProductManagementService(AppDbContext context, IFileStorage fileStorage) : IProductManagementService
 {
-    private static readonly string[] AllowedMediaExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm", ".mov"];
+    private static readonly string[] ProductAllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm", ".mov"];
 
     private readonly AppDbContext _context = context;
-    private readonly string _mediaFolder = Path.Combine(environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "media", "products");
-
+    
     public async Task<Result<PaginatedList<ProductManagementResponse>>> GetAsync(int pageIndex, int pageSize, bool includeDeleted, CancellationToken cancellationToken = default)
     {
         pageSize = Math.Clamp(pageSize, 1, 50);
@@ -70,8 +68,9 @@ public class ProductManagementService(AppDbContext context, IWebHostEnvironment 
             WarrantyDays = request.WarrantyDays
         };
 
-        foreach (var url in await SaveMediaAsync(media))
-            product.Media.Add(new ProductMedia { Url = url });
+        var savedFiles = await fileStorage.SaveAllAsync(media, "media/products", 10 * 1024 * 1024, ProductAllowedExtensions, cancellationToken);
+        foreach (var f in savedFiles)
+            product.Media.Add(new ProductMedia { Url = f.Url });
 
         _context.Products.Add(product);
         await _context.SaveChangesAsync(cancellationToken);
@@ -140,28 +139,6 @@ public class ProductManagementService(AppDbContext context, IWebHostEnvironment 
 
         await _context.SaveChangesAsync(cancellationToken);
         return Result.Succeed();
-    }
-
-    private async Task<List<string>> SaveMediaAsync(IList<IFormFile> media)
-    {
-        var urls = new List<string>();
-
-        foreach (var file in media)
-        {
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!AllowedMediaExtensions.Contains(extension) || file.Length == 0)
-                continue;
-
-            Directory.CreateDirectory(_mediaFolder);
-
-            var fileName = $"{Guid.NewGuid():N}{extension}";
-            await using var stream = File.Create(Path.Combine(_mediaFolder, fileName));
-            await file.CopyToAsync(stream);
-
-            urls.Add($"/media/products/{fileName}");
-        }
-
-        return urls;
     }
 
     private async Task<Product?> FindAsync(int id, bool trackChanges, CancellationToken cancellationToken)

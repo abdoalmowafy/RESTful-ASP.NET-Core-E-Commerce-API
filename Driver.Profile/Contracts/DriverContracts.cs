@@ -12,6 +12,14 @@ public record DriverProfileResponse(
 
 public record ApplyDriverRequest(VehicleType VehicleType, string PlateNumber, string LicenseNumber);
 
+public record ApplyDriverForm(
+    VehicleType VehicleType,
+    string PlateNumber,
+    string LicenseNumber,
+    IFormFile? LicenseImage = null,
+    IFormFile? VehicleRegistration = null,
+    IFormFile? NationalId = null);
+
 public record DeliveryResponse(
     int OrderId,
     string CustomerName,
