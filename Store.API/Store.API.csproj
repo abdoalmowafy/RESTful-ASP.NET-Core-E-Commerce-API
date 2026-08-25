@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <UserSecretsId>ecommerce-api-2f4a6c1e-9b7d-4f3a-8e5c-1d0b9a7f3c2d</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Scalar.AspNetCore" Version="2.16.6" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ECommerce.Authentication\ECommerce.Authentication.csproj" />
+    <ProjectReference Include="..\ECommerce.Infrastructure\ECommerce.Infrastructure.csproj" />
+    <ProjectReference Include="..\Catalog.Public\Catalog.Public.csproj" />
+    <ProjectReference Include="..\Catalog.Management\Catalog.Management.csproj" />
+    <ProjectReference Include="..\Shopping.Customer\Shopping.Customer.csproj" />
+    <ProjectReference Include="..\Ordering.Customer\Ordering.Customer.csproj" />
+    <ProjectReference Include="..\Ordering.Management\Ordering.Management.csproj" />
+    <ProjectReference Include="..\Admin.Management\Admin.Management.csproj" />
+    <ProjectReference Include="..\Admin.Profile\Admin.Profile.csproj" />
+    <ProjectReference Include="..\Customer.Management\Customer.Management.csproj" />
+    <ProjectReference Include="..\Customer.Profile\Customer.Profile.csproj" />
+    <ProjectReference Include="..\Seller.Management\Seller.Management.csproj" />
+    <ProjectReference Include="..\Seller.Profile\Seller.Profile.csproj" />
+    <ProjectReference Include="..\Driver.Management\Driver.Management.csproj" />
+    <ProjectReference Include="..\Driver.Profile\Driver.Profile.csproj" />
+    <ProjectReference Include="..\Roles.Management\Roles.Management.csproj" />
+    <ProjectReference Include="..\Notifications\Notifications.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,14 @@
+global using ECommerce.Infrastructure.Abstractions;
+global using ECommerce.Infrastructure.Entities;
+global using ECommerce.Infrastructure.Entities.Enums;
+global using ECommerce.Infrastructure.Errors;
+global using ECommerce.Infrastructure.Extensions;
+global using ECommerce.Infrastructure.Persistence;
+global using ECommerce.Authentication.Authorization;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using ECommerce.Infrastructure.Services;

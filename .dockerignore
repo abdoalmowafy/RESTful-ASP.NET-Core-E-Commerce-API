@@ -1,0 +1,10 @@
+**
+!/**/
+!*.*
+*.md
+!README.md
+.vs
+.git
+logs
+bin
+obj

@@ -1,0 +1,36 @@
+<Project>
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AnalysisLevel>latest</AnalysisLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- System Usings -->
+    <Using Include="System.Security.Claims" />
+    <Using Include="System.IdentityModel.Tokens.Jwt" />
+    <Using Include="Microsoft.IdentityModel.Tokens" />
+
+    <!-- Microsoft Usings -->
+    <Using Include="Microsoft.AspNetCore.Mvc" />
+    <Using Include="Microsoft.AspNetCore.Http" />
+    <Using Include="Microsoft.EntityFrameworkCore" />
+    <Using Include="Microsoft.Extensions.Options" />
+    <Using Include="Microsoft.Extensions.Logging" />
+    <Using Include="Microsoft.AspNetCore.Authorization" />
+    <Using Include="Microsoft.AspNetCore.Identity" />
+    <Using Include="Microsoft.EntityFrameworkCore.Metadata.Builders" />
+
+    <!-- FluentValidation -->
+    <Using Include="FluentValidation" />
+
+    <!-- ECommerce Infrastructure Usings (shared library) -->
+    <Using Include="ECommerce.Infrastructure.Abstractions" />
+    <Using Include="ECommerce.Infrastructure.Errors" />
+    <Using Include="ECommerce.Infrastructure.Extensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.OpenApi" Version="2.12.2" />
+  </ItemGroup>
+</Project>

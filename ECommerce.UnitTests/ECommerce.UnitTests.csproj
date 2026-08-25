@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.9" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ECommerce.Infrastructure\ECommerce.Infrastructure.csproj" />
+    <ProjectReference Include="..\ECommerce.Authentication\ECommerce.Authentication.csproj" />
+    <ProjectReference Include="..\Catalog.Public\Catalog.Public.csproj" />
+    <ProjectReference Include="..\Catalog.Management\Catalog.Management.csproj" />
+    <ProjectReference Include="..\Shopping.Customer\Shopping.Customer.csproj" />
+    <ProjectReference Include="..\Ordering.Customer\Ordering.Customer.csproj" />
+    <ProjectReference Include="..\Ordering.Management\Ordering.Management.csproj" />
+    <ProjectReference Include="..\Admin.Management\Admin.Management.csproj" />
+    <ProjectReference Include="..\Admin.Profile\Admin.Profile.csproj" />
+    <ProjectReference Include="..\Customer.Management\Customer.Management.csproj" />
+    <ProjectReference Include="..\Customer.Profile\Customer.Profile.csproj" />
+    <ProjectReference Include="..\Seller.Management\Seller.Management.csproj" />
+    <ProjectReference Include="..\Seller.Profile\Seller.Profile.csproj" />
+    <ProjectReference Include="..\Driver.Management\Driver.Management.csproj" />
+    <ProjectReference Include="..\Driver.Profile\Driver.Profile.csproj" />
+    <ProjectReference Include="..\Roles.Management\Roles.Management.csproj" />
+  </ItemGroup>
+
+</Project>

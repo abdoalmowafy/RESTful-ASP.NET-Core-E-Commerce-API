@@ -1,0 +1,12 @@
+global using ECommerce.Infrastructure.Abstractions;
+global using ECommerce.Infrastructure.Entities;
+global using ECommerce.Infrastructure.Errors;
+global using ECommerce.Infrastructure.Extensions;
+global using ECommerce.Infrastructure.Persistence;
+global using ECommerce.Authentication.Authorization;
+global using ECommerce.Authentication.Contracts;
+global using ECommerce.Authentication.Jwt;
+global using ECommerce.Authentication.Services;
+global using System.Text;
+global using ECommerce.Authentication.Contracts.Validators;
+global using ECommerce.Infrastructure.Services;
