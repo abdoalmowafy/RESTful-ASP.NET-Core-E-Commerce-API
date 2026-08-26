@@ -14,7 +14,7 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 
         RuleFor(x => x.Email)
             .NotEmpty()
-            .Matches(RegexPatterns.Email);
+            .EmailAddress();
 
         RuleFor(x => x.Password)
             .NotEmpty()

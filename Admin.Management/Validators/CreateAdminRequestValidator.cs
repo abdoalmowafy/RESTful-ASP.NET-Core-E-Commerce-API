@@ -8,7 +8,7 @@ public class CreateAdminRequestValidator : AbstractValidator<CreateAdminRequest>
     {
         RuleFor(x => x.FirstName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.LastName).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.Email).NotEmpty().Matches(RegexPatterns.Email);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
         RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
         RuleFor(x => x.PhoneNumber).Matches(RegexPatterns.PhoneNumber).When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
     }

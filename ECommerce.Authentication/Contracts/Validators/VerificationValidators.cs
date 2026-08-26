@@ -7,7 +7,7 @@ public class VerifyEmailRequestValidator : AbstractValidator<VerifyEmailRequest>
 {
     public VerifyEmailRequestValidator()
     {
-        RuleFor(x => x.Email).NotEmpty().Matches(RegexPatterns.Email);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
         RuleFor(x => x.Code).NotEmpty().Matches(@"^\d{6}$");
     }
 }
@@ -24,7 +24,7 @@ public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRe
 {
     public ForgotPasswordRequestValidator()
     {
-        RuleFor(x => x.Email).NotEmpty().Matches(RegexPatterns.Email);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
     }
 }
 
