@@ -2,6 +2,7 @@ using System.Security.Claims;
 using ECommerce.Infrastructure.Abstractions;
 using ECommerce.Infrastructure.Entities;
 using ECommerce.Infrastructure.Entities.Enums;
+using ECommerce.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,8 +24,37 @@ public static class DbSeeder
             await SeedUsersAsync(userManager, context);
         await SeedStoresAsync(context, adminId, sellerId);
         await SeedCatalogAsync(context);
+        await NormalizeStoredPhoneNumbersInternalAsync(context);
 
         context.ChangeTracker.Clear();
+    }
+
+    /// <summary>
+    /// One-time idempotent pass: converts legacy local-format phone numbers
+    /// (01111111111) to canonical E.164 (+201111111111). Rows already in
+    /// E.164 or that fail to parse are left untouched.
+    /// </summary>
+    /// <summary>Test/ops hook wrapping the normalization pass.</summary>
+    public static Task NormalizeStoredPhoneNumbersAsync(AppDbContext context)
+        => NormalizeStoredPhoneNumbersInternalAsync(context);
+
+    private static async Task NormalizeStoredPhoneNumbersInternalAsync(AppDbContext context)
+    {
+        var stale = await context.Users
+            .Where(u => u.PhoneNumber != null && !u.PhoneNumber.StartsWith("+"))
+            .ToListAsync();
+
+        foreach (var user in stale)
+        {
+            var e164 = user.PhoneNumber!.ToE164();
+            if (e164 is null || e164 == user.PhoneNumber)
+                continue;
+
+            user.PhoneNumber = e164;
+        }
+
+        if (stale.Count > 0)
+            await context.SaveChangesAsync();
     }
 
     private static async Task SeedRolesAsync(RoleManager<ApplicationRole> roleManager, AppDbContext context)
