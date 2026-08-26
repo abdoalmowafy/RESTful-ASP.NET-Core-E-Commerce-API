@@ -16,8 +16,5 @@ public static class DefaultUsers
 
 public static class RegexPatterns
 {
-    /// <summary>Business rule: digits only, optional country code, 8–14 digits total.</summary>
-    public const string PhoneNumber = @"^(\+?\d{1,3}[\s-]?)?\d{8,14}$";
-
     public const string Sku = @"^[A-Z0-9]{2,10}-[0-9]{4}$";
 }
