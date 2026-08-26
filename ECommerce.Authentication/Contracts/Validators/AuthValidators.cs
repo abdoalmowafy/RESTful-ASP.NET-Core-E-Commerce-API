@@ -21,7 +21,7 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
             .MinimumLength(8);
 
         RuleFor(x => x.PhoneNumber)
-            .Matches(RegexPatterns.PhoneNumber)
+            .Must(v => v.IsValidPhone()).WithMessage("A valid phone number is required")
             .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
 
         RuleFor(x => x.DateOfBirth)

@@ -27,14 +27,16 @@ public class AuthProfileService(UserManager<ApplicationUser> userManager) : IAut
         if (user is null)
             return Result.Failure<UserProfileResponse>(UserErrors.NotFound);
 
-        if (!string.IsNullOrWhiteSpace(request.PhoneNumber)
-            && !string.Equals(user.PhoneNumber, request.PhoneNumber, StringComparison.OrdinalIgnoreCase)
-            && _userManager.Users.Any(u => u.PhoneNumber == request.PhoneNumber))
+        var incomingPhone = request.PhoneNumber.ToE164();
+
+        if (!string.IsNullOrWhiteSpace(incomingPhone)
+            && !string.Equals(user.PhoneNumber, incomingPhone, StringComparison.OrdinalIgnoreCase)
+            && _userManager.Users.Any(u => u.PhoneNumber == incomingPhone))
             return Result.Failure<UserProfileResponse>(UserErrors.PhoneDuplicated);
 
         user.FirstName = request.FirstName;
         user.LastName = request.LastName;
-        user.PhoneNumber = request.PhoneNumber;
+        user.PhoneNumber = request.PhoneNumber.ToE164();
         user.DateOfBirth = request.DateOfBirth;
         user.Gender = request.Gender;
 

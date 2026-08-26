@@ -23,7 +23,7 @@ public class AuthProfileServiceTests : IDisposable
             LastName = "Name",
             Email = email,
             UserName = email,
-            PhoneNumber = phone,
+            PhoneNumber = phone.ToE164(),
             EmailConfirmed = true
         };
 
@@ -49,12 +49,12 @@ public class AuthProfileServiceTests : IDisposable
         var user = await SeedUserAsync();
 
         var result = await new AuthProfileService(_users).UpdateAsync(TestActor.For(user.Id), new UpdateProfileRequest(
-            "New", "Name", "01099997777", new DateOnly(2000, 5, 15), Gender.Female));
+            "New", "Name", "+201099997777", new DateOnly(2000, 5, 15), Gender.Female));
 
         Assert.True(result.IsSucceed);
         Assert.Equal("New", result.Value.FirstName);
         Assert.Equal("Name", result.Value.LastName);
-        Assert.Equal("01099997777", result.Value.PhoneNumber);
+        Assert.Equal("+201099997777", result.Value.PhoneNumber);
         Assert.Equal(new DateOnly(2000, 5, 15), result.Value.DateOfBirth);
         Assert.Equal(Gender.Female, result.Value.Gender);
 

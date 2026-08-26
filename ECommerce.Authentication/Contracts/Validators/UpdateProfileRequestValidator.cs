@@ -13,7 +13,7 @@ public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequ
             .NotEmpty().MaximumLength(100);
 
         RuleFor(x => x.PhoneNumber)
-            .Matches(RegexPatterns.PhoneNumber)
+            .Must(v => v.IsValidPhone()).WithMessage("A valid phone number is required")
             .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
 
         RuleFor(x => x.DateOfBirth)

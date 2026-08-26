@@ -21,8 +21,10 @@ public class AuthRegistrationService(UserManager<ApplicationUser> userManager) :
         if (await _userManager.FindByEmailAsync(request.Email) is not null)
             return Result.Failure(UserErrors.EmailDuplicated);
 
-        if (!string.IsNullOrWhiteSpace(request.PhoneNumber)
-            && _userManager.Users.Any(u => u.PhoneNumber == request.PhoneNumber))
+        var normalizedPhone = request.PhoneNumber.ToE164();
+
+        if (!string.IsNullOrWhiteSpace(normalizedPhone)
+            && _userManager.Users.Any(u => u.PhoneNumber == normalizedPhone))
             return Result.Failure(UserErrors.PhoneDuplicated);
 
         var user = new ApplicationUser
@@ -31,7 +33,7 @@ public class AuthRegistrationService(UserManager<ApplicationUser> userManager) :
             LastName = request.LastName,
             Email = request.Email,
             UserName = request.Email,
-            PhoneNumber = request.PhoneNumber,
+            PhoneNumber = normalizedPhone,
             DateOfBirth = request.DateOfBirth,
             Gender = request.Gender,
             EmailConfirmed = false,
