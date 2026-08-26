@@ -86,7 +86,7 @@ public class ReturnManagementService(AppDbContext context) : IReturnManagementSe
                     ur => ur.RoleId,
                     r => r.Id,
                     (ur, r) => new { ur.UserId, RoleName = r.Name })
-                .AnyAsync(x => x.UserId == transporter.Id && x.RoleName == DefaultRoles.Driver, cancellationToken))
+                .AnyAsync(x => x.UserId == transporter.Id && x.RoleName == "Driver", cancellationToken))
             return Result.Failure(OrderingErrors.Return.NotTransporter);
 
         returnRequest.TransporterId = transporter.Id;

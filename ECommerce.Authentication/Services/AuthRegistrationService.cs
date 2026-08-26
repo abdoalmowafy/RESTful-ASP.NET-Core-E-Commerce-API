@@ -45,7 +45,7 @@ public class AuthRegistrationService(UserManager<ApplicationUser> userManager) :
             return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
         }
 
-        await _userManager.AddToRoleAsync(user, DefaultRoles.Customer);
+        await _userManager.AddToRoleAsync(user, "Customer");
 
         user.Cart = new Cart { UserId = user.Id };
         user.CustomerProfile = new CustomerProfile { Id = user.Id, Status = ProfileStatus.Active };

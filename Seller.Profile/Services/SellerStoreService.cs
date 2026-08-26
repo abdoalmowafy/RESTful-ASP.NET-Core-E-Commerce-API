@@ -56,8 +56,8 @@ public class SellerStoreService(AppDbContext context, UserManager<ApplicationUse
         await _context.SaveChangesAsync(cancellationToken);
 
         var owner = await _userManager.FindByIdAsync(ownerId);
-        if (owner is not null && !await _userManager.IsInRoleAsync(owner, DefaultRoles.Seller))
-            await _userManager.AddToRoleAsync(owner, DefaultRoles.Seller);
+        if (owner is not null && !await _userManager.IsInRoleAsync(owner, "Seller"))
+            await _userManager.AddToRoleAsync(owner, "Seller");
 
         return Result.Succeed(ToResponse(store));
     }

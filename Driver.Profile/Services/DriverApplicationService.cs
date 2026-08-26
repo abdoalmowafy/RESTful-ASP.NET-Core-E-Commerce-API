@@ -31,7 +31,7 @@ public class DriverApplicationService(
         if (user is null)
             return Result.Failure<DriverProfileResponse>(UserErrors.NotFound);
 
-        await _userManager.AddToRoleAsync(user, DefaultRoles.Driver);
+        await _userManager.AddToRoleAsync(user, "Driver");
 
         var docs = await SaveDocsAsync(userId, form, cancellationToken);
         if (docs.IsFailure)

@@ -47,11 +47,11 @@ public static class DbSeeder
 
         var driverPermissions = new[] { Permissions.Deliveries.Handle };
 
-        await EnsureRoleWithPermissionsAsync(roleManager, context, DefaultRoles.SuperAdmin, superAdminPermissions, isDefault: true);
-        await EnsureRoleWithPermissionsAsync(roleManager, context, DefaultRoles.Admin, adminPermissions, isDefault: true);
-        await EnsureRoleWithPermissionsAsync(roleManager, context, DefaultRoles.Driver, driverPermissions, isDefault: false);
-        await EnsureRoleWithPermissionsAsync(roleManager, context, DefaultRoles.Customer, [], isDefault: true);
-        await EnsureRoleWithPermissionsAsync(roleManager, context, DefaultRoles.Seller, [], isDefault: false);
+        await EnsureRoleWithPermissionsAsync(roleManager, context, "SuperAdmin", superAdminPermissions, isDefault: true);
+        await EnsureRoleWithPermissionsAsync(roleManager, context, "Admin", adminPermissions, isDefault: true);
+        await EnsureRoleWithPermissionsAsync(roleManager, context, "Driver", driverPermissions, isDefault: false);
+        await EnsureRoleWithPermissionsAsync(roleManager, context, "Customer", [], isDefault: true);
+        await EnsureRoleWithPermissionsAsync(roleManager, context, "Seller", [], isDefault: false);
 
         context.ChangeTracker.Clear();
     }
@@ -97,16 +97,16 @@ public static class DbSeeder
         SeedUsersAsync(UserManager<ApplicationUser> userManager, AppDbContext context)
     {
         var superAdminId = (await CreateUserAsync(userManager, context, "Sam Super", DefaultUsers.SuperAdminEmail, DefaultUsers.SuperAdminPassword,
-            DefaultRoles.SuperAdmin, "01111111111")).id;
+            "SuperAdmin", "01111111111")).id;
         var adminId = (await CreateUserAsync(userManager, context, "Adam Admin", DefaultUsers.AdminEmail, DefaultUsers.AdminPassword,
-            DefaultRoles.Admin, "01222222222", adminProfile: ("Marketplace Operations", "Operations"))).id;
+            "Admin", "01222222222", adminProfile: ("Marketplace Operations", "Operations"))).id;
         var sellerId = (await CreateUserAsync(userManager, context, "Laila Seller", DefaultUsers.SellerEmail, DefaultUsers.SellerPassword,
-            DefaultRoles.Seller, "01033334444")).id;
+            "Seller", "01033334444")).id;
         var driverId = (await CreateUserAsync(userManager, context, "Tarek Transporter", DefaultUsers.DriverEmail, DefaultUsers.DriverPassword,
-            DefaultRoles.Driver, "01555556666",
+            "Driver", "01555556666",
             driverProfile: (VehicleType.Van, "ABC 1234", "DL-99887"))).id;
         var customerId = (await CreateUserAsync(userManager, context, "Careem Customer", DefaultUsers.CustomerEmail, DefaultUsers.CustomerPassword,
-            DefaultRoles.Customer, "01044445555")).id;
+            "Customer", "01044445555")).id;
 
         return (superAdminId, adminId, sellerId, driverId, customerId);
     }
@@ -146,11 +146,11 @@ public static class DbSeeder
 
         switch (role)
         {
-            case DefaultRoles.Customer:
+            case "Customer":
                 user.CustomerProfile = new CustomerProfile { Id = user.Id };
                 break;
-            case DefaultRoles.Admin:
-            case DefaultRoles.SuperAdmin:
+            case "Admin":
+            case "SuperAdmin":
                 user.AdminProfile = new AdminProfile
                 {
                     Id = user.Id,
@@ -158,7 +158,7 @@ public static class DbSeeder
                     Department = adminProfile?.Department ?? "Core"
                 };
                 break;
-            case DefaultRoles.Driver:
+            case "Driver":
                 user.DriverProfile = new DriverProfile
                 {
                     Id = user.Id,
@@ -170,7 +170,7 @@ public static class DbSeeder
                 break;
         }
 
-        if (user.Cart is null && role == DefaultRoles.Customer)
+        if (user.Cart is null && role == "Customer")
             user.Cart = new Cart { UserId = user.Id };
 
         await userManager.UpdateAsync(user);

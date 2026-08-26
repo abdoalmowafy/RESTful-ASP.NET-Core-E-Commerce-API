@@ -40,7 +40,7 @@ public static class TestHost
         var users = sp.GetRequiredService<UserManager<ApplicationUser>>();
         var roles = sp.GetRequiredService<RoleManager<ApplicationRole>>();
 
-        foreach (var roleName in new[] { DefaultRoles.SuperAdmin, DefaultRoles.Admin, DefaultRoles.Customer, DefaultRoles.Seller, DefaultRoles.Driver })
+        foreach (var roleName in new[] { "SuperAdmin", "Admin", "Customer", "Seller", "Driver" })
         {
             if (await roles.FindByNameAsync(roleName) is null)
                 await roles.CreateAsync(new ApplicationRole { Name = roleName });

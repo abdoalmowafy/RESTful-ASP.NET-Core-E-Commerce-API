@@ -18,6 +18,6 @@ public static class UserExtensions
     public static bool IsStaff(this ClaimsPrincipal user)
     {
         var roles = user.GetRoleNames();
-        return roles.Contains(DefaultRoles.Admin) || roles.Contains(DefaultRoles.SuperAdmin);
+        return roles.Contains("Admin") || roles.Contains("SuperAdmin");
     }
 }

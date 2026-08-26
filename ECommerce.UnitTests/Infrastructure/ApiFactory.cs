@@ -66,11 +66,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
         foreach (var (name, perms) in new Dictionary<string, string[]>
         {
-            [DefaultRoles.SuperAdmin] = Permissions.All,
-            [DefaultRoles.Admin] = Permissions.All,
-            [DefaultRoles.Customer] = Array.Empty<string>(),
-            [DefaultRoles.Seller] = Array.Empty<string>(),
-            [DefaultRoles.Driver] = new[] { Permissions.Deliveries.Handle }
+            ["SuperAdmin"] = Permissions.All,
+            ["Admin"] = Permissions.All,
+            ["Customer"] = Array.Empty<string>(),
+            ["Seller"] = Array.Empty<string>(),
+            ["Driver"] = new[] { Permissions.Deliveries.Handle }
         })
         {
             if (await roles.FindByNameAsync(name) is null)
@@ -88,11 +88,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
         foreach (var (email, firstName, lastName, role) in new[]
         {
-            ("superadmin@matrix.test", "Super", "Admin", DefaultRoles.SuperAdmin),
-            ("admin@matrix.test", "Adam", "Admin", DefaultRoles.Admin),
-            ("customer@matrix.test", "Casey", "Customer", DefaultRoles.Customer),
-            ("seller@matrix.test", "Sam", "Seller", DefaultRoles.Seller),
-            ("driver@matrix.test", "Danny", "Driver", DefaultRoles.Driver)
+            ("superadmin@matrix.test", "Super", "Admin", "SuperAdmin"),
+            ("admin@matrix.test", "Adam", "Admin", "Admin"),
+            ("customer@matrix.test", "Casey", "Customer", "Customer"),
+            ("seller@matrix.test", "Sam", "Seller", "Seller"),
+            ("driver@matrix.test", "Danny", "Driver", "Driver")
         })
         {
             if (await users.FindByEmailAsync(email) is not null)
@@ -114,11 +114,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
             switch (role)
             {
-                case DefaultRoles.Customer:
+                case "Customer":
                     user.CustomerProfile = new CustomerProfile { Id = user.Id };
                     break;
 
-                case DefaultRoles.Seller:
+                case "Seller":
                     var store = new Store
                     {
                         OwnerId = user.Id,
@@ -131,7 +131,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
                     user.SellerProfile = new SellerProfile { Id = user.Id, StoreId = store.Id };
                     break;
 
-                case DefaultRoles.Driver:
+                case "Driver":
                     user.DriverProfile = new DriverProfile
                     {
                         Id = user.Id,

@@ -29,7 +29,7 @@ public class AuthRegistrationServiceTests : IDisposable
 
         var user = await _users.FindByEmailAsync("sara@shop.test");
         Assert.NotNull(user);
-        Assert.Contains(DefaultRoles.Customer, await _users.GetRolesAsync(user!));
+        Assert.Contains("Customer", await _users.GetRolesAsync(user!));
     }
 
     [Fact]

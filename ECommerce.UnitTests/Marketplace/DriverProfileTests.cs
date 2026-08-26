@@ -43,7 +43,7 @@ public class DriverProfileTests : IDisposable
         Assert.Equal(DriverStatus.PendingVerification, result.Value.Status);
 
         var user = await _users.FindByIdAsync(userId);
-        Assert.Contains(DefaultRoles.Driver, await _users.GetRolesAsync(user!));
+        Assert.Contains("Driver", await _users.GetRolesAsync(user!));
     }
 
     [Fact]

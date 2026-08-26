@@ -137,7 +137,7 @@ public class SellerStoreAndProductTests : IDisposable
         Assert.True(created.IsSucceed);
 
         var owner = await userManager().FindByIdAsync(ownerId);
-        Assert.Contains(DefaultRoles.Seller, await userManager().GetRolesAsync(owner!));
+        Assert.Contains("Seller", await userManager().GetRolesAsync(owner!));
     }
 
     public void Dispose() => (_sp as IDisposable)?.Dispose();

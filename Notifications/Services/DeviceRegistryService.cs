@@ -65,9 +65,9 @@ public class DeviceRegistryService(
 
     private static AppOwnerType ResolveOwnerType(IList<string> roles)
     {
-        if (roles.Contains(DefaultRoles.Driver)) return AppOwnerType.Driver;
-        if (roles.Contains(DefaultRoles.Seller)) return AppOwnerType.Seller;
-        if (roles.Contains(DefaultRoles.Admin) || roles.Contains(DefaultRoles.SuperAdmin)) return AppOwnerType.Admin;
+        if (roles.Contains("Driver")) return AppOwnerType.Driver;
+        if (roles.Contains("Seller")) return AppOwnerType.Seller;
+        if (roles.Contains("Admin") || roles.Contains("SuperAdmin")) return AppOwnerType.Admin;
         return AppOwnerType.Customer;
     }
 }

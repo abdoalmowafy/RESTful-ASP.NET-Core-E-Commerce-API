@@ -99,14 +99,14 @@ public class AuthServiceTests : IDisposable
     public async Task Valid_login_returns_token_and_roles()
     {
         var user = await SeedUserAsync();
-        await _users.AddToRoleAsync(user, DefaultRoles.Customer);
+        await _users.AddToRoleAsync(user, "Customer");
 
         var result = await CreateSut().LoginAsync(new LoginRequest("login@shop.test", "Passw0rd!"));
 
         Assert.True(result.IsSucceed);
         Assert.False(string.IsNullOrWhiteSpace(result.Value.Token));
         Assert.Equal(3600, result.Value.ExpiresIn);
-        Assert.Contains(DefaultRoles.Customer, result.Value.Roles);
+        Assert.Contains("Customer", result.Value.Roles);
         Assert.Equal("login@shop.test", result.Value.Email);
     }
 

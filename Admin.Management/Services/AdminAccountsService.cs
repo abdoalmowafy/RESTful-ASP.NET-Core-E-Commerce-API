@@ -11,7 +11,7 @@ public interface IAdminAccountsService
 
 public class AdminAccountsService(UserManager<ApplicationUser> userManager) : IAdminAccountsService
 {
-    private static readonly string[] StaffRoles = [DefaultRoles.SuperAdmin, DefaultRoles.Admin];
+    private static readonly string[] StaffRoles = ["SuperAdmin", "Admin"];
 
     private readonly UserManager<ApplicationUser> _userManager = userManager;
 
@@ -75,7 +75,7 @@ public class AdminAccountsService(UserManager<ApplicationUser> userManager) : IA
         user.AdminProfile = new AdminProfile { Id = user.Id };
         await _userManager.UpdateAsync(user);
 
-        await _userManager.AddToRoleAsync(user, DefaultRoles.Admin);
+        await _userManager.AddToRoleAsync(user, "Admin");
         return Result.Succeed();
     }
 
@@ -89,7 +89,7 @@ public class AdminAccountsService(UserManager<ApplicationUser> userManager) : IA
         if (!roles.Any(r => StaffRoles.Contains(r)))
             return Result.Failure(UserErrors.NotFound);
 
-        if (roles.Contains(DefaultRoles.SuperAdmin))
+        if (roles.Contains("SuperAdmin"))
             return Result.Failure(Error.Forbidden("Admins.SuperAdminImmutable", "Super administrators cannot be disabled"));
 
         user.IsDisabled = request.Disabled;

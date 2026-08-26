@@ -1,14 +1,5 @@
 namespace ECommerce.Infrastructure.Abstractions;
 
-public static class DefaultRoles
-{
-    public const string SuperAdmin = "SuperAdmin";
-    public const string Admin = "Admin";
-    public const string Customer = "Customer";
-    public const string Seller = "Seller";
-    public const string Driver = "Driver";
-}
-
 public static class DefaultUsers
 {
     public const string SuperAdminEmail = "superadmin@store.com";

@@ -40,7 +40,7 @@ public class JwtProvider(
         foreach (var role in roles)
             claims.Add(new Claim("roles", role));
 
-        if (roles.Contains(DefaultRoles.Customer))
+        if (roles.Contains("Customer"))
         {
             var status = await _dbContext.CustomerProfiles
                 .AsNoTracking()
@@ -51,7 +51,7 @@ public class JwtProvider(
             claims.Add(new Claim("customer_status", status.ToString()));
         }
 
-        if (roles.Contains(DefaultRoles.Seller))
+        if (roles.Contains("Seller"))
         {
             var storeStatus = await _dbContext.Stores
                 .AsNoTracking()
@@ -63,7 +63,7 @@ public class JwtProvider(
                 (storeStatus ?? StoreStatus.PendingVerification).ToString()));
         }
 
-        if (roles.Contains(DefaultRoles.Driver))
+        if (roles.Contains("Driver"))
         {
             var driverStatus = await _dbContext.DriverProfiles
                 .AsNoTracking()
