@@ -1,5 +1,6 @@
 using Driver.Profile.Contracts;
 using Driver.Profile.Services;
+using ECommerce.Infrastructure.Entities.Enums;
 using ECommerce.UnitTests.Infrastructure;
 
 namespace ECommerce.UnitTests.Marketplace;
@@ -40,7 +41,7 @@ public class DriverProfileTests : IDisposable
         var result = await Sut().ApplyAsync(userId, new ApplyDriverRequest(VehicleType.Car, "XYZ 5678", "DL-77123"));
 
         Assert.True(result.IsSucceed);
-        Assert.Equal(DriverStatus.PendingVerification, result.Value.Status);
+        Assert.Equal(RegistrationStatus.PendingVerification, result.Value.Status);
 
         var user = await _users.FindByIdAsync(userId);
         Assert.Contains("Driver", await _users.GetRolesAsync(user!));
@@ -68,14 +69,14 @@ public class DriverProfileTests : IDisposable
         await sut.ApplyAsync(userId, new ApplyDriverRequest(VehicleType.Motorcycle, "MOT 0101", "DL-9"));
 
         var user = await _users.Users.Include(u => u.DriverProfile).FirstAsync(u => u.Id == userId);
-        user.DriverProfile!.Status = DriverStatus.Rejected;
+        user.DriverProfile!.RegistrationStatus = RegistrationStatus.Rejected;
         user.DriverProfile.RejectionReason = "Blurry license";
         await _users.UpdateAsync(user);
 
         var resubmit = await sut.ResubmitAsync(userId, new ApplyDriverRequest(VehicleType.Van, "VAN 2020", "DL-10"));
 
         Assert.True(resubmit.IsSucceed);
-        Assert.Equal(DriverStatus.PendingVerification, resubmit.Value.Status);
+        Assert.Equal(RegistrationStatus.PendingVerification, resubmit.Value.Status);
         Assert.Null(resubmit.Value.RejectionReason);
     }
 

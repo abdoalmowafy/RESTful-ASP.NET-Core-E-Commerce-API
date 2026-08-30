@@ -188,16 +188,17 @@ public static class DbSeeder
                     Department = adminProfile?.Department ?? "Core"
                 };
                 break;
-            case "Driver":
-                user.DriverProfile = new DriverProfile
-                {
-                    Id = user.Id,
-                    Status = DriverStatus.Active,
-                    VehicleType = driverProfile?.Vehicle ?? VehicleType.Motorcycle,
-                    PlateNumber = driverProfile?.Plate ?? "N/A",
-                    LicenseNumber = driverProfile?.License ?? "N/A"
-                };
-                break;
+case "Driver":
+                    user.DriverProfile = new DriverProfile
+                    {
+                        Id = user.Id,
+                        RegistrationStatus = RegistrationStatus.Active,
+                        IsActive = true,
+                        VehicleType = driverProfile?.Vehicle ?? VehicleType.Motorcycle,
+                        PlateNumber = driverProfile?.Plate ?? "N/A",
+                        LicenseNumber = driverProfile?.License ?? "N/A"
+                    };
+                    break;
         }
 
         if (user.Cart is null && role == "Customer")

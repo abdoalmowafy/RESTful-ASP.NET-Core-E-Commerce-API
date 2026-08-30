@@ -1,4 +1,5 @@
 using Customer.Profile.Contracts;
+using ECommerce.Infrastructure.Entities.Enums;
 
 namespace Customer.Profile.Services;
 
@@ -29,7 +30,7 @@ public class CustomerProfileService(UserManager<ApplicationUser> userManager) : 
             user.PhoneNumber,
             user.DateOfBirth,
             user.Gender,
-            user.CustomerProfile.Status,
+            user.CustomerProfile.RegistrationStatus,
             user.CustomerProfile.LoyaltyPoints));
     }
 }

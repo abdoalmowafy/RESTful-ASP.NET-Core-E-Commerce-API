@@ -1,5 +1,6 @@
 using Driver.Management.Contracts;
 using Driver.Management.Services;
+using ECommerce.Infrastructure.Entities.Enums;
 
 namespace Driver.Management.Controllers;
 
@@ -13,7 +14,7 @@ public class DriversController(IDriverManagementService driverService) : Control
     [HttpGet]
     [HasPermission(Permissions.Drivers.View)]
     public async Task<IActionResult> Get(
-        [FromQuery] DriverStatus? status,
+        [FromQuery] RegistrationStatus? status,
         [FromQuery] string? search,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 10,

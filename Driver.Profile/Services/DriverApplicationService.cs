@@ -31,7 +31,7 @@ public class DriverApplicationService(
         if (user is null)
             return Result.Failure<DriverProfileResponse>(UserErrors.NotFound);
 
-        await _userManager.AddToRoleAsync(user, "Driver");
+        await _userManager.AddToRoleAsync(user, DefaultRoles.Driver);
 
         var docs = await SaveDocsAsync(userId, form, cancellationToken);
         if (docs.IsFailure)
@@ -40,7 +40,8 @@ public class DriverApplicationService(
         var profile = new DriverProfile
         {
             Id = user.Id,
-            Status = DriverStatus.PendingVerification,
+            RegistrationStatus = RegistrationStatus.PendingVerification,
+            IsActive = false,
             VehicleType = form.VehicleType,
             PlateNumber = form.PlateNumber.Trim(),
             LicenseNumber = form.LicenseNumber.Trim(),
@@ -64,7 +65,7 @@ public class DriverApplicationService(
         if (user?.DriverProfile is null)
             return Result.Failure<DriverProfileResponse>(MarketplaceErrors.DriverProfile.NotFound);
 
-        if (user.DriverProfile.Status != DriverStatus.Rejected)
+        if (user.DriverProfile.RegistrationStatus != RegistrationStatus.Rejected)
             return Result.Failure<DriverProfileResponse>(MarketplaceErrors.DriverProfile.NotEditable);
 
         var profile = user.DriverProfile;
@@ -75,7 +76,8 @@ public class DriverApplicationService(
         profile.VehicleType = form.VehicleType;
         profile.PlateNumber = form.PlateNumber.Trim();
         profile.LicenseNumber = form.LicenseNumber.Trim();
-        profile.Status = DriverStatus.PendingVerification;
+        profile.RegistrationStatus = RegistrationStatus.PendingVerification;
+        profile.IsActive = false;
         profile.RejectionReason = null;
         profile.LicenseImageUrl = docs.Value.LicenseImageUrl ?? profile.LicenseImageUrl;
         profile.VehicleRegistrationUrl = docs.Value.VehicleRegistrationUrl ?? profile.VehicleRegistrationUrl;
@@ -90,7 +92,7 @@ public class DriverApplicationService(
         var pending = await _context.DriverProfiles
             .AsNoTracking()
             .Include(p => p.User)
-            .Where(p => p.Status == DriverStatus.PendingVerification)
+            .Where(p => p.RegistrationStatus == RegistrationStatus.PendingVerification)
             .OrderBy(p => p.CreatedAt)
             .Select(p => new DriverProfileResponse(
                 p.Id,
@@ -99,7 +101,7 @@ public class DriverApplicationService(
                 p.VehicleType,
                 p.PlateNumber,
                 p.LicenseNumber,
-                p.Status,
+                p.RegistrationStatus,
                 p.RejectionReason))
             .ToListAsync(cancellationToken);
 
@@ -143,6 +145,6 @@ public class DriverApplicationService(
             u.DriverProfile.VehicleType,
             u.DriverProfile.PlateNumber,
             u.DriverProfile.LicenseNumber,
-            u.DriverProfile.Status,
+            u.DriverProfile.RegistrationStatus,
             u.DriverProfile.RejectionReason);
 }

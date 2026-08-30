@@ -7,7 +7,7 @@ public record DriverManagementResponse(
     VehicleType VehicleType,
     string PlateNumber,
     string LicenseNumber,
-    DriverStatus Status,
+    RegistrationStatus Status,
     string? RejectionReason);
 
-public record UpdateDriverStatusRequest(DriverStatus Status, string? Reason = null);
+public record UpdateDriverStatusRequest(RegistrationStatus Status, string? Reason = null);

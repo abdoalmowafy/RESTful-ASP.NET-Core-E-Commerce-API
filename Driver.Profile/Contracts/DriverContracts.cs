@@ -7,7 +7,7 @@ public record DriverProfileResponse(
     VehicleType VehicleType,
     string PlateNumber,
     string LicenseNumber,
-    DriverStatus Status,
+    RegistrationStatus Status,
     string? RejectionReason);
 
 public record ApplyDriverRequest(VehicleType VehicleType, string PlateNumber, string LicenseNumber);

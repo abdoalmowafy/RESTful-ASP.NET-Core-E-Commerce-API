@@ -1,4 +1,5 @@
 using Customer.Management.Contracts;
+using ECommerce.Infrastructure.Entities.Enums;
 
 namespace Customer.Management.Services;
 
@@ -41,7 +42,7 @@ public class CustomerManagementService(UserManager<ApplicationUser> userManager)
             u.LastName,
             u.Email!,
             u.PhoneNumber,
-            u.CustomerProfile!.Status,
+            u.CustomerProfile!.RegistrationStatus,
             u.IsDisabled,
             u.CreatedAt)).ToList();
 
@@ -57,8 +58,8 @@ public class CustomerManagementService(UserManager<ApplicationUser> userManager)
         if (user is null)
             return Result.Failure(MarketplaceErrors.Profiles.CustomerNotFound);
 
-        user.CustomerProfile!.Status = request.Status;
-        user.IsDisabled = request.Status == ProfileStatus.Suspended;
+        user.CustomerProfile!.RegistrationStatus = request.Status;
+        user.IsDisabled = request.Status == RegistrationStatus.Rejected;
 
         await _userManager.UpdateAsync(user);
         return Result.Succeed();

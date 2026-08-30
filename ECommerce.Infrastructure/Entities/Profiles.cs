@@ -6,7 +6,8 @@ public class CustomerProfile
 {
     public string Id { get; set; } = string.Empty;
     public ApplicationUser? User { get; set; }
-    public ProfileStatus Status { get; set; } = ProfileStatus.Active;
+    public RegistrationStatus RegistrationStatus { get; set; } = RegistrationStatus.PendingVerification;
+    public bool IsActive { get; set; } = true;
     public int LoyaltyPoints { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
@@ -39,7 +40,8 @@ public class DriverProfile
     public string? LicenseImageUrl { get; set; }
     public string? VehicleRegistrationUrl { get; set; }
     public string? NationalIdUrl { get; set; }
-    public DriverStatus Status { get; set; } = DriverStatus.PendingVerification;
+    public RegistrationStatus RegistrationStatus { get; set; } = RegistrationStatus.PendingVerification;
+    public bool IsActive { get; set; } = true;
     public string? RejectionReason { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -1,10 +1,11 @@
 using Driver.Management.Contracts;
+using ECommerce.Infrastructure.Entities.Enums;
 
 namespace Driver.Management.Services;
 
 public interface IDriverManagementService
 {
-    Task<Result<PaginatedList<DriverManagementResponse>>> GetAsync(DriverStatus? status, string? search, int pageIndex, int pageSize, CancellationToken cancellationToken = default);
+    Task<Result<PaginatedList<DriverManagementResponse>>> GetAsync(RegistrationStatus? status, string? search, int pageIndex, int pageSize, CancellationToken cancellationToken = default);
     Task<Result> UpdateStatusAsync(string driverId, UpdateDriverStatusRequest request, CancellationToken cancellationToken = default);
 }
 
@@ -14,7 +15,7 @@ public class DriverManagementService(AppDbContext context, UserManager<Applicati
     private readonly UserManager<ApplicationUser> _userManager = userManager;
 
     public async Task<Result<PaginatedList<DriverManagementResponse>>> GetAsync(
-        DriverStatus? status,
+        RegistrationStatus? status,
         string? search,
         int pageIndex,
         int pageSize,
@@ -28,7 +29,7 @@ public class DriverManagementService(AppDbContext context, UserManager<Applicati
             .Where(p => true);
 
         if (status.HasValue)
-            query = query.Where(p => p.Status == status.Value);
+            query = query.Where(p => p.RegistrationStatus == status.Value);
 
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(p =>
@@ -47,7 +48,7 @@ public class DriverManagementService(AppDbContext context, UserManager<Applicati
             p.VehicleType,
             p.PlateNumber,
             p.LicenseNumber,
-            p.Status,
+            p.RegistrationStatus,
             p.RejectionReason)).ToList();
 
         return Result.Succeed(new PaginatedList<DriverManagementResponse>(mapped, page.PageNumber, page.TotalCount, pageSize));
@@ -62,32 +63,31 @@ public class DriverManagementService(AppDbContext context, UserManager<Applicati
         if (user?.DriverProfile is null)
             return Result.Failure(MarketplaceErrors.DriverProfile.NotFound);
 
-        if (request.Status == DriverStatus.PendingVerification)
+        if (request.Status == RegistrationStatus.PendingVerification)
             return Result.Failure(OrderingErrors.Order.InvalidStatusTransition);
 
-        if (request.Status == DriverStatus.Rejected && string.IsNullOrWhiteSpace(request.Reason))
+        if (request.Status == RegistrationStatus.Rejected && string.IsNullOrWhiteSpace(request.Reason))
             return Result.Failure(Error.BadRequest("Driver.RejectionReasonRequired", "A rejection reason is required"));
 
         var profile = user.DriverProfile;
-        if (profile.Status == request.Status)
+        if (profile.RegistrationStatus == request.Status)
             return Result.Succeed();
 
-        if (!AllowedTransitions.TryGetValue(request.Status, out var allowedFrom) || !allowedFrom.Contains(profile.Status))
+        if (!AllowedTransitions.TryGetValue(request.Status, out var allowedFrom) || !allowedFrom.Contains(profile.RegistrationStatus))
             return Result.Failure(OrderingErrors.Order.InvalidStatusTransition);
 
-        profile.Status = request.Status;
-        profile.RejectionReason = request.Status == DriverStatus.Rejected ? request.Reason : null;
-        user.IsDisabled = request.Status == DriverStatus.Suspended;
+        profile.RegistrationStatus = request.Status;
+        profile.RejectionReason = request.Status == RegistrationStatus.Rejected ? request.Reason : null;
+        user.IsDisabled = request.Status == RegistrationStatus.Rejected;
 
         await _userManager.UpdateAsync(user);
         return Result.Succeed();
 
     }
 
-    private static readonly Dictionary<DriverStatus, DriverStatus[]> AllowedTransitions = new()
+    private static readonly Dictionary<RegistrationStatus, RegistrationStatus[]> AllowedTransitions = new()
     {
-        [DriverStatus.Active] = [DriverStatus.PendingVerification, DriverStatus.Suspended],
-        [DriverStatus.Suspended] = [DriverStatus.Active],
-        [DriverStatus.Rejected] = [DriverStatus.PendingVerification]
+        [RegistrationStatus.Active] = [RegistrationStatus.PendingVerification],
+        [RegistrationStatus.Rejected] = [RegistrationStatus.PendingVerification]
     };
 }

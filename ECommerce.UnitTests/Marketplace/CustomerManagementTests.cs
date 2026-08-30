@@ -1,5 +1,6 @@
 using Customer.Management.Contracts;
 using Customer.Management.Services;
+using ECommerce.Infrastructure.Entities.Enums;
 using ECommerce.UnitTests.Infrastructure;
 
 namespace ECommerce.UnitTests.Marketplace;
@@ -35,15 +36,15 @@ public class CustomerManagementTests : IDisposable
     }
 
     [Fact]
-    public async Task Suspending_customer_disables_the_account()
+    public async Task Rejecting_customer_disables_the_account()
     {
         var (user, sut) = await SeedAsync();
 
-        var result = await sut.UpdateStatusAsync(user.Id, new UpdateCustomerStatusRequest(ProfileStatus.Suspended));
+        var result = await sut.UpdateStatusAsync(user.Id, new UpdateCustomerStatusRequest(RegistrationStatus.Rejected));
 
         Assert.True(result.IsSucceed);
         var reloaded = await _users.Users.Include(u => u.CustomerProfile).FirstAsync(u => u.Id == user.Id);
-        Assert.Equal(ProfileStatus.Suspended, reloaded.CustomerProfile!.Status);
+        Assert.Equal(RegistrationStatus.Rejected, reloaded.CustomerProfile!.RegistrationStatus);
         Assert.True(reloaded.IsDisabled);
     }
 
@@ -51,15 +52,15 @@ public class CustomerManagementTests : IDisposable
     public async Task Reactivating_restores_access()
     {
         var (user, sut) = await SeedAsync();
-        user.CustomerProfile!.Status = ProfileStatus.Suspended;
+        user.CustomerProfile!.RegistrationStatus = RegistrationStatus.Rejected;
         user.IsDisabled = true;
         await _users.UpdateAsync(user);
 
-        var result = await sut.UpdateStatusAsync(user.Id, new UpdateCustomerStatusRequest(ProfileStatus.Active));
+        var result = await sut.UpdateStatusAsync(user.Id, new UpdateCustomerStatusRequest(RegistrationStatus.Active));
 
         Assert.True(result.IsSucceed);
         var reloaded = await _users.Users.Include(u => u.CustomerProfile).FirstAsync(u => u.Id == user.Id);
-        Assert.Equal(ProfileStatus.Active, reloaded.CustomerProfile!.Status);
+        Assert.Equal(RegistrationStatus.Active, reloaded.CustomerProfile!.RegistrationStatus);
         Assert.False(reloaded.IsDisabled);
     }
 
@@ -68,7 +69,7 @@ public class CustomerManagementTests : IDisposable
     {
         var (_, sut) = await SeedAsync();
 
-        var result = await sut.UpdateStatusAsync(Guid.NewGuid().ToString(), new UpdateCustomerStatusRequest(ProfileStatus.Suspended));
+        var result = await sut.UpdateStatusAsync(Guid.NewGuid().ToString(), new UpdateCustomerStatusRequest(RegistrationStatus.Rejected));
 
         Assert.True(result.IsFailure);
         Assert.Equal(MarketplaceErrors.Profiles.CustomerNotFound.Code, result.Error.Code);

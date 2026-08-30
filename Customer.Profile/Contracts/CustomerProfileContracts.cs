@@ -8,5 +8,5 @@ public record CustomerProfileResponse(
     string? PhoneNumber,
     DateOnly? DateOfBirth,
     Gender? Gender,
-    ProfileStatus Status,
+    RegistrationStatus Status,
     int LoyaltyPoints);

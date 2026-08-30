@@ -28,19 +28,20 @@ public class StoreConfiguration : IEntityTypeConfiguration<Store>
 }
 
 public class CustomerProfileConfiguration : IEntityTypeConfiguration<CustomerProfile>
-{
-    public void Configure(EntityTypeBuilder<CustomerProfile> builder)
     {
-        builder.HasKey(p => p.Id);
+        public void Configure(EntityTypeBuilder<CustomerProfile> builder)
+        {
+            builder.HasKey(p => p.Id);
 
-        builder.HasOne(p => p.User)
-            .WithOne(u => u.CustomerProfile)
-            .HasForeignKey<CustomerProfile>(p => p.Id)
-            .OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne(p => p.User)
+                .WithOne(u => u.CustomerProfile)
+                .HasForeignKey<CustomerProfile>(p => p.Id)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Property(p => p.Status).HasConversion<string>();
+            builder.Property(p => p.RegistrationStatus).HasConversion<string>();
+            builder.Property(p => p.IsActive);
+        }
     }
-}
 
 public class AdminProfileConfiguration : IEntityTypeConfiguration<AdminProfile>
 {
@@ -83,7 +84,8 @@ public class DriverProfileConfiguration : IEntityTypeConfiguration<DriverProfile
         builder.Property(p => p.VehicleType).HasConversion<string>();
         builder.Property(p => p.PlateNumber).HasMaxLength(20).IsRequired();
         builder.Property(p => p.LicenseNumber).HasMaxLength(40).IsRequired();
-        builder.Property(p => p.Status).HasConversion<string>();
+        builder.Property(p => p.RegistrationStatus).HasConversion<string>();
+        builder.Property(p => p.IsActive);
         builder.Property(p => p.RejectionReason).HasMaxLength(500);
 
         builder.HasOne(p => p.User)

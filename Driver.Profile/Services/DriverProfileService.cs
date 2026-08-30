@@ -1,4 +1,5 @@
 using Driver.Profile.Contracts;
+using ECommerce.Infrastructure.Entities.Enums;
 
 namespace Driver.Profile.Services;
 
@@ -30,15 +31,16 @@ public class DriverProfileService(UserManager<ApplicationUser> userManager) : ID
         if (user is null)
             return Result.Failure<DriverProfileResponse>(UserErrors.NotFound);
 
-        await _userManager.AddToRoleAsync(user, "Driver");
+        await _userManager.AddToRoleAsync(user, DefaultRoles.Driver);
 
         user.DriverProfile = new DriverProfile
         {
             Id = user.Id,
+            RegistrationStatus = RegistrationStatus.PendingVerification,
+            IsActive = false,
             VehicleType = request.VehicleType,
             PlateNumber = request.PlateNumber,
-            LicenseNumber = request.LicenseNumber,
-            Status = DriverStatus.PendingVerification
+            LicenseNumber = request.LicenseNumber
         };
 
         await _userManager.UpdateAsync(user);
@@ -51,13 +53,14 @@ public class DriverProfileService(UserManager<ApplicationUser> userManager) : ID
         if (user?.DriverProfile is null)
             return Result.Failure<DriverProfileResponse>(MarketplaceErrors.DriverProfile.NotFound);
 
-        if (user.DriverProfile.Status != DriverStatus.Rejected)
+        if (user.DriverProfile.RegistrationStatus != RegistrationStatus.Rejected)
             return Result.Failure<DriverProfileResponse>(MarketplaceErrors.DriverProfile.NotEditable);
 
         user.DriverProfile.VehicleType = request.VehicleType;
         user.DriverProfile.PlateNumber = request.PlateNumber;
         user.DriverProfile.LicenseNumber = request.LicenseNumber;
-        user.DriverProfile.Status = DriverStatus.PendingVerification;
+        user.DriverProfile.RegistrationStatus = RegistrationStatus.PendingVerification;
+        user.DriverProfile.IsActive = false;
         user.DriverProfile.RejectionReason = null;
 
         await _userManager.UpdateAsync(user);
@@ -77,6 +80,6 @@ public class DriverProfileService(UserManager<ApplicationUser> userManager) : ID
             u.DriverProfile.VehicleType,
             u.DriverProfile.PlateNumber,
             u.DriverProfile.LicenseNumber,
-            u.DriverProfile.Status,
+            u.DriverProfile.RegistrationStatus,
             u.DriverProfile.RejectionReason);
 }

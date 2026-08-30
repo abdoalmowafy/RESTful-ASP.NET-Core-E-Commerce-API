@@ -46,10 +46,11 @@ public enum StoreStatus
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ProfileStatus
+public enum RegistrationStatus
 {
+    PendingVerification,
     Active,
-    Suspended
+    Rejected
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

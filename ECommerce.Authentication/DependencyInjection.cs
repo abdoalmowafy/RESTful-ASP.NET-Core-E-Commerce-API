@@ -69,7 +69,7 @@ services.AddAuthorization(options =>
             options.AddPolicy(PolicyNames.ActiveCustomer, policy =>
                 policy.RequireAuthenticatedUser()
                       .AddRequirements(new ProfileStatusRequirement(ProfileClaims.CustomerStatus,
-                          ProfileStatus.Active.ToString())));
+                          RegistrationStatus.Active.ToString())));
 
             options.AddPolicy(PolicyNames.ActiveSeller, policy =>
                 policy.RequireAuthenticatedUser()
@@ -79,12 +79,12 @@ services.AddAuthorization(options =>
             options.AddPolicy(PolicyNames.PendingDriver, policy =>
                 policy.RequireAuthenticatedUser()
                       .AddRequirements(new ProfileStatusRequirement(ProfileClaims.DriverStatus,
-                          DriverStatus.PendingVerification.ToString(), DriverStatus.Rejected.ToString())));
+                          RegistrationStatus.PendingVerification.ToString(), RegistrationStatus.Rejected.ToString())));
 
             options.AddPolicy(PolicyNames.ActiveDriver, policy =>
                 policy.RequireAuthenticatedUser()
                       .AddRequirements(new ProfileStatusRequirement(ProfileClaims.DriverStatus,
-                          DriverStatus.Active.ToString())));
+                          RegistrationStatus.Active.ToString())));
         });
 
         services.AddScoped<IAuthorizationHandler, VerifiedUserHandler>();

@@ -6,8 +6,8 @@ public record CustomerManagementResponse(
     string LastName,
     string Email,
     string? PhoneNumber,
-    ProfileStatus Status,
+    RegistrationStatus Status,
     bool IsDisabled,
     DateTime CreatedAt);
 
-public record UpdateCustomerStatusRequest(ProfileStatus Status);
+public record UpdateCustomerStatusRequest(RegistrationStatus Status);

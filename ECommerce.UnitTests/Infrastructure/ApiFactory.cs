@@ -135,7 +135,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
                     user.DriverProfile = new DriverProfile
                     {
                         Id = user.Id,
-                        Status = DriverStatus.Active,
+                        RegistrationStatus = RegistrationStatus.Active,
+                        IsActive = true,
                         PlateNumber = "TST 0001",
                         LicenseNumber = "DL-0001"
                     };
