@@ -39,7 +39,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IServiceProvid
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-        builder.HasDbFunction(() => PgFunctions.Unaccent(default))
+        builder.HasDbFunction(() => PgFunctions.Unaccent(default!))
             .HasName("f_unaccent");
     }
 

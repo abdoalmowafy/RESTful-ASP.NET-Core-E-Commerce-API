@@ -4,9 +4,6 @@ using Microsoft.AspNetCore.SignalR;
 using ECommerce.Infrastructure.Entities;
 using ECommerce.Infrastructure.Hubs;
 
-using ECommerce.Infrastructure.Entities.Enums;
-using ECommerce.Infrastructure.Persistence;
-using Microsoft.AspNetCore.SignalR;
 namespace ECommerce.Infrastructure.Services;
 
 /// <summary>

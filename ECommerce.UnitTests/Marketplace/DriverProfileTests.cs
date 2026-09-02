@@ -45,7 +45,7 @@ public class DriverProfileTests : IDisposable
 
         var user = await _users.FindByIdAsync(userId);
         Assert.DoesNotContain("Driver", await _users.GetRolesAsync(user!));
-        Assert.NotNull(user.DriverProfile);
+        Assert.NotNull(user!.DriverProfile);
     }
 
     [Fact]

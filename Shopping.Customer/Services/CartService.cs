@@ -191,13 +191,14 @@ public class CartService(AppDbContext context) : ICartService
             .Where(cp => cp.Product != null && cp.Product.DeletedAt == null && cp.Quantity > 0)
             .Select(cp =>
             {
-                var (salePercent, finalPriceCents) = OfferPricing.EffectivePricing(cp.Product!, offerDiscounts);
+                var product = cp.Product!;
+                var (salePercent, finalPriceCents) = OfferPricing.EffectivePricing(product, offerDiscounts);
                 return new CartProductResponse(
                     cp.ProductId,
-                    cp.Product.Name,
-                    cp.Product.Sku,
+                    product.Name,
+                    product.Sku,
                     cp.Quantity,
-                    cp.Product.PriceCents,
+                    product.PriceCents,
                     salePercent,
                     finalPriceCents,
                     finalPriceCents * cp.Quantity);

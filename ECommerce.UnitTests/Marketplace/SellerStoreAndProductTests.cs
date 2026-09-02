@@ -1,7 +1,6 @@
 using ECommerce.Infrastructure.Caching;
 using ECommerce.UnitTests.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;

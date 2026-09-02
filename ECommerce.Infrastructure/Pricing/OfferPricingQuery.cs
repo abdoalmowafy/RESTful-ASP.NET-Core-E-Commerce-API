@@ -24,13 +24,13 @@ public static class OfferPricingQuery
         return await context.OfferProducts
             .AsNoTracking()
             .Where(op => productIds.Contains(op.ProductId))
-            .Where(op => op.Offer.IsActive
+            .Where(op => op.Offer!.IsActive
                          && op.Offer.StartsAt <= utcNow
                          && op.Offer.EndsAt > utcNow
-                         && op.Offer.Store.DeletedAt == null
+                         && op.Offer.Store!.DeletedAt == null
                          && op.Offer.Store.Status == StoreStatus.Active)
             .GroupBy(op => op.ProductId)
-            .Select(g => new { ProductId = g.Key, Best = g.Max(op => op.Offer.DiscountPercent) })
+            .Select(g => new { ProductId = g.Key, Best = g.Max(op => op.Offer!.DiscountPercent) })
             .ToDictionaryAsync(x => x.ProductId, x => x.Best, cancellationToken);
     }
 }

@@ -2,7 +2,6 @@ using ECommerce.Infrastructure.Persistence;
 using ECommerce.Infrastructure.Entities;
 using ECommerce.Infrastructure.Entities.Enums;
 
-using ECommerce.Infrastructure.Persistence;
 namespace ECommerce.Infrastructure.Services;
 
 public record RegisteredDevice(Guid Id, DevicePlatform Platform, string? DeviceName, DateTime LastRegisteredAtUtc);
