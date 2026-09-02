@@ -1,3 +1,4 @@
+using ECommerce.Infrastructure.Caching;
 using ECommerce.UnitTests.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting;
@@ -46,7 +47,7 @@ public class SellerStoreAndProductTests : IDisposable
         IHostEnvironment env = new FakeWebHostEnvironment { ContentRootPath = AppContext.BaseDirectory, WebRootPath = storageRoot };
         var storage = new LocalFileStorage((IWebHostEnvironment)env, Options.Create(new FileStorageOptions { RootPath = storageRoot }));
 
-        return new SellerProductService(_db, storage);
+        return new SellerProductService(_db, storage, _sp.GetRequiredService<HomePageCache>());
     }
 
     [Fact]

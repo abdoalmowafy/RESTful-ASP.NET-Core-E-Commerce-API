@@ -17,4 +17,5 @@ public class Store
     public DateTime? DeletedAt { get; set; }
 
     public ICollection<Product> Products { get; set; } = [];
+    public ICollection<Offer> Offers { get; set; } = [];
 }

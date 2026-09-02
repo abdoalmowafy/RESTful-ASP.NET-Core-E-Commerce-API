@@ -23,7 +23,7 @@ public class CartService(AppDbContext context) : ICartService
         if (cart is null)
             return Result.Failure<CartResponse>(ShoppingErrors.Cart.Empty);
 
-        return Result.Succeed(ToResponse(cart));
+        return Result.Succeed(await BuildResponseAsync(cart.Id, cancellationToken));
     }
 
     public async Task<Result<CartResponse>> AddItemAsync(string userId, AddCartItemRequest request, CancellationToken cancellationToken = default)
@@ -173,23 +173,32 @@ public class CartService(AppDbContext context) : ICartService
                     .ThenInclude(p => p!.Media)
             .FirstAsync(c => c.Id == cartId, cancellationToken);
 
-        return ToResponse(cart);
+        var productIds = cart.CartProducts
+            .Where(cp => cp.Product != null && cp.Product.DeletedAt == null && cp.Quantity > 0)
+            .Select(cp => cp.Product!.Id)
+            .Distinct()
+            .ToList();
+
+        var offerDiscounts = await _context
+            .LoadBestOfferDiscountByProductAsync(productIds, DateTime.UtcNow, cancellationToken);
+
+        return ToResponse(cart, offerDiscounts);
     }
 
-    private static CartResponse ToResponse(Cart cart)
+    private static CartResponse ToResponse(Cart cart, IReadOnlyDictionary<int, int> offerDiscounts)
     {
         var items = cart.CartProducts
             .Where(cp => cp.Product != null && cp.Product.DeletedAt == null && cp.Quantity > 0)
             .Select(cp =>
             {
-                var finalPriceCents = cp.Product!.FinalPriceCents;
+                var (salePercent, finalPriceCents) = OfferPricing.EffectivePricing(cp.Product!, offerDiscounts);
                 return new CartProductResponse(
                     cp.ProductId,
                     cp.Product.Name,
                     cp.Product.Sku,
                     cp.Quantity,
                     cp.Product.PriceCents,
-                    cp.Product.SalePercent,
+                    salePercent,
                     finalPriceCents,
                     finalPriceCents * cp.Quantity);
             })

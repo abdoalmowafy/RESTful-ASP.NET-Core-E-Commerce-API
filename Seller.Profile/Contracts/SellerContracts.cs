@@ -43,3 +43,24 @@ public record SellerOrderItemResponse(
     int Quantity,
     long LineTotalCents,
     DateTime OrderedAt);
+
+public record SellerOfferResponse(
+    int Id,
+    string Title,
+    string? Description,
+    int DiscountPercent,
+    DateTime StartsAt,
+    DateTime EndsAt,
+    bool IsActive,
+    DateTime CreatedAt,
+    IReadOnlyList<int> ProductIds);
+
+public record UpsertOfferRequest(
+    string Title,
+    string? Description,
+    int DiscountPercent,
+    DateTime StartsAt,
+    DateTime EndsAt,
+    IReadOnlyList<int> ProductIds);
+
+public record SetOfferActiveRequest(bool IsActive);

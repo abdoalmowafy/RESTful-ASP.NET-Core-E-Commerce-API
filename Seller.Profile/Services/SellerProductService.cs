@@ -12,12 +12,13 @@ public interface ISellerProductService
     Task<Result> DeleteAsync(string ownerId, int productId, ClaimsPrincipal actor, CancellationToken cancellationToken = default);
 }
 
-public class SellerProductService(AppDbContext context, IFileStorage fileStorage) : ISellerProductService
+public class SellerProductService(AppDbContext context, IFileStorage fileStorage, HomePageCache homePageCache) : ISellerProductService
 {
     private static readonly string[] AllowedMediaExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm", ".mov"];
 
     private readonly AppDbContext _context = context;
     private readonly IFileStorage _fileStorage = fileStorage;
+    private readonly HomePageCache _homePageCache = homePageCache;
 
     public async Task<Result<Store?>> GetActiveStoreAsync(string ownerId, CancellationToken cancellationToken)
     {
@@ -86,6 +87,8 @@ public class SellerProductService(AppDbContext context, IFileStorage fileStorage
         _context.Products.Add(product);
         await _context.SaveChangesAsync(cancellationToken);
 
+        await _homePageCache.InvalidateHomeAsync(cancellationToken);
+
         product.Category = await _context.Categories.FindAsync([product.CategoryId], cancellationToken);
         return Result.Succeed(ToResponse(product));
     }
@@ -120,6 +123,9 @@ public class SellerProductService(AppDbContext context, IFileStorage fileStorage
         product.WarrantyDays = request.WarrantyDays;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _homePageCache.InvalidateHomeAsync(cancellationToken);
+
         return Result.Succeed(ToResponse(product));
     }
 
@@ -140,6 +146,9 @@ public class SellerProductService(AppDbContext context, IFileStorage fileStorage
 
         product.Quantity = request.Quantity;
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _homePageCache.InvalidateHomeAsync(cancellationToken);
+
         return Result.Succeed();
     }
 
@@ -163,6 +172,9 @@ public class SellerProductService(AppDbContext context, IFileStorage fileStorage
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _homePageCache.InvalidateHomeAsync(cancellationToken);
+
         return Result.Succeed();
     }
 

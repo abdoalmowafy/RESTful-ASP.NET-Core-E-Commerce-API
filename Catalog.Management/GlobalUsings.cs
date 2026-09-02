@@ -3,6 +3,7 @@ global using ECommerce.Infrastructure.Entities;
 global using ECommerce.Infrastructure.Entities.Enums;
 global using ECommerce.Infrastructure.Errors;
 global using ECommerce.Infrastructure.Extensions;
+global using ECommerce.Infrastructure.Caching;
 global using ECommerce.Infrastructure.Persistence;
 global using ECommerce.Authentication.Authorization;
 global using Microsoft.AspNetCore.Mvc;

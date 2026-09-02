@@ -12,11 +12,12 @@ public interface IProductManagementService
     Task<Result> DeleteAsync(int id, ClaimsPrincipal actor, CancellationToken cancellationToken = default);
 }
 
-public class ProductManagementService(AppDbContext context, IFileStorage fileStorage) : IProductManagementService
+public class ProductManagementService(AppDbContext context, IFileStorage fileStorage, HomePageCache homePageCache) : IProductManagementService
 {
     private static readonly string[] ProductAllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm", ".mov"];
 
     private readonly AppDbContext _context = context;
+    private readonly HomePageCache _homePageCache = homePageCache;
     
     public async Task<Result<PaginatedList<ProductManagementResponse>>> GetAsync(int pageIndex, int pageSize, bool includeDeleted, CancellationToken cancellationToken = default)
     {
@@ -75,6 +76,8 @@ public class ProductManagementService(AppDbContext context, IFileStorage fileSto
         _context.Products.Add(product);
         await _context.SaveChangesAsync(cancellationToken);
 
+        await _homePageCache.InvalidateHomeAsync(cancellationToken);
+
         product.Category = await _context.Categories.FindAsync([product.CategoryId], cancellationToken);
         return Result.Succeed(ToResponse(product));
     }
@@ -102,6 +105,8 @@ public class ProductManagementService(AppDbContext context, IFileStorage fileSto
 
         await _context.SaveChangesAsync(cancellationToken);
 
+        await _homePageCache.InvalidateHomeAsync(cancellationToken);
+
         product.Category = await _context.Categories.FindAsync([product.CategoryId], cancellationToken);
         return Result.Succeed(ToResponse(product));
     }
@@ -117,6 +122,8 @@ public class ProductManagementService(AppDbContext context, IFileStorage fileSto
 
         product.Quantity = request.Quantity;
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _homePageCache.InvalidateHomeAsync(cancellationToken);
 
         return Result.Succeed();
     }
@@ -138,6 +145,9 @@ public class ProductManagementService(AppDbContext context, IFileStorage fileSto
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _homePageCache.InvalidateHomeAsync(cancellationToken);
+
         return Result.Succeed();
     }
 

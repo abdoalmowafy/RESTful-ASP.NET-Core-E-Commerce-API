@@ -9,6 +9,7 @@ public static class DependencyInjection
         services.AddScoped<ISellerStoreService, SellerStoreService>();
         services.AddScoped<ISellerProductService, SellerProductService>();
         services.AddScoped<ISellerOrderService, SellerOrderService>();
+        services.AddScoped<ISellerOfferService, SellerOfferService>();
         return services;
     }
 }

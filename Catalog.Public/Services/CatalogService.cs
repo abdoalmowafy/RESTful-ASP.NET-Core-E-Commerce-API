@@ -13,11 +13,12 @@ public interface ICatalogService
         CancellationToken cancellationToken = default);
 }
 
-public class CatalogService(AppDbContext context) : ICatalogService
+public class CatalogService(AppDbContext context, HomePageCache homePageCache) : ICatalogService
 {
     private static volatile bool _fullTextEnabled = true;
 
     private readonly AppDbContext _context = context;
+    private readonly HomePageCache _homePageCache = homePageCache;
 
     public async Task<Result<IReadOnlyList<CategoryResponse>>> GetCategoriesAsync(CancellationToken cancellationToken = default)
     {
@@ -31,6 +32,12 @@ public class CatalogService(AppDbContext context) : ICatalogService
     }
 
     public async Task<Result<HomeResponse>> GetHomeAsync(CancellationToken cancellationToken = default)
+    {
+        var home = await _homePageCache.GetOrCreateHomeAsync(() => BuildHomeAsync(cancellationToken));
+        return Result.Succeed(home!);
+    }
+
+    private async Task<HomeResponse> BuildHomeAsync(CancellationToken cancellationToken)
     {
         var available = _context.Products
             .AsNoTracking()
@@ -54,10 +61,16 @@ public class CatalogService(AppDbContext context) : ICatalogService
             .Take(25)
             .ToListAsync(cancellationToken);
 
-        return Result.Succeed(new HomeResponse(
-            [.. bestSellers.Select(ToDetailedBrief)],
-            [.. topDeals.Select(ToDetailedBrief)],
-            [.. newArrivals.Select(ToDetailedBrief)]));
+        var allIds = bestSellers.Concat(topDeals).Concat(newArrivals)
+            .Select(p => p.Id).Distinct().ToList();
+
+        var offerDiscounts = await _context
+            .LoadBestOfferDiscountByProductAsync(allIds, DateTime.UtcNow, cancellationToken);
+
+        return new HomeResponse(
+            [.. bestSellers.Select(p => ToDetailedBrief(p, offerDiscounts))],
+            [.. topDeals.Select(p => ToDetailedBrief(p, offerDiscounts))],
+            [.. newArrivals.Select(p => ToDetailedBrief(p, offerDiscounts))]);
     }
 
     public async Task<Result<ProductDetailedResponse>> GetProductAsync(int productId, CancellationToken cancellationToken = default)
@@ -79,6 +92,11 @@ public class CatalogService(AppDbContext context) : ICatalogService
         product.Views++;
         await _context.SaveChangesAsync(cancellationToken);
 
+        var offerDiscounts = await _context
+            .LoadBestOfferDiscountByProductAsync([product.Id], DateTime.UtcNow, cancellationToken);
+
+        var (effectiveSalePercent, effectiveFinalPriceCents) = EffectivePricing(product, offerDiscounts);
+
         var response = new ProductDetailedResponse(
             product.Id,
             product.StoreId,
@@ -89,8 +107,8 @@ public class CatalogService(AppDbContext context) : ICatalogService
             product.CategoryId,
             product.Category?.Name ?? string.Empty,
             product.PriceCents,
-            product.SalePercent,
-            product.FinalPriceCents,
+            effectiveSalePercent,
+            effectiveFinalPriceCents,
             product.WarrantyDays,
             product.Quantity,
             product.Quantity > 0,
@@ -198,19 +216,10 @@ public class CatalogService(AppDbContext context) : ICatalogService
                 request.PageIndex, request.PageSize, cancellationToken);
         }
 
-        var mapped = page.Items.Select(p => new ProductBriefResponse(
-            p.Id,
-            p.StoreId,
-            p.Store?.Name ?? string.Empty,
-            p.Name,
-            p.Sku,
-            p.Category?.Name ?? string.Empty,
-            p.PriceCents,
-            p.SalePercent,
-            p.FinalPriceCents,
-            p.WarrantyDays,
-            p.Quantity,
-            p.Media.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault()))
+        var offerDiscounts = await _context
+            .LoadBestOfferDiscountByProductAsync(page.Items.Select(p => p.Id).ToList(), DateTime.UtcNow, cancellationToken);
+
+        var mapped = page.Items.Select(p => ToBrief(p, offerDiscounts))
             .ToList();
 
         return Result.Succeed<PaginatedList<ProductBriefResponse>>(
@@ -288,8 +297,10 @@ public class CatalogService(AppDbContext context) : ICatalogService
         return builder.ToString().Normalize(System.Text.NormalizationForm.FormC);
     }
 
-    private static ProductBriefResponse ToDetailedBrief(Product p)
-        => new(
+    private static ProductBriefResponse ToDetailedBrief(Product p, IReadOnlyDictionary<int, int> offerDiscounts)
+    {
+        var (salePercent, finalPriceCents) = EffectivePricing(p, offerDiscounts);
+        return new ProductBriefResponse(
             p.Id,
             p.StoreId,
             p.Store?.Name ?? string.Empty,
@@ -297,9 +308,39 @@ public class CatalogService(AppDbContext context) : ICatalogService
             p.Sku,
             p.Category?.Name ?? string.Empty,
             p.PriceCents,
-            p.SalePercent,
-            p.FinalPriceCents,
+            salePercent,
+            finalPriceCents,
             p.WarrantyDays,
             p.Quantity,
             p.Media.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault());
+    }
+
+    private static ProductBriefResponse ToBrief(Product p, IReadOnlyDictionary<int, int> offerDiscounts)
+    {
+        var (salePercent, finalPriceCents) = EffectivePricing(p, offerDiscounts);
+        return new ProductBriefResponse(
+            p.Id,
+            p.StoreId,
+            p.Store?.Name ?? string.Empty,
+            p.Name,
+            p.Sku,
+            p.Category?.Name ?? string.Empty,
+            p.PriceCents,
+            salePercent,
+            finalPriceCents,
+            p.WarrantyDays,
+            p.Quantity,
+            p.Media.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault());
+    }
+
+    private static (int SalePercent, long FinalPriceCents) EffectivePricing(
+        Product p,
+        IReadOnlyDictionary<int, int> offerDiscounts)
+    {
+        var effectivePercent = OfferPricing.EffectiveSalePercent(
+            basePercent: p.SalePercent,
+            offerPercent: offerDiscounts.GetValueOrDefault(p.Id));
+        var finalCents = OfferPricing.EffectiveFinalPriceCents(p.PriceCents, effectivePercent);
+        return (effectivePercent, finalCents);
+    }
 }

@@ -27,3 +27,17 @@ public class SellerProductRequestValidator : AbstractValidator<SellerProductRequ
         RuleFor(x => x.WarrantyDays).InclusiveBetween(14, 3650);
     }
 }
+
+public class UpsertOfferRequestValidator : AbstractValidator<UpsertOfferRequest>
+{
+    public UpsertOfferRequestValidator()
+    {
+        RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Description).MaximumLength(2000);
+        RuleFor(x => x.DiscountPercent).InclusiveBetween(1, 99);
+        RuleFor(x => x.StartsAt).NotEmpty();
+        RuleFor(x => x.EndsAt).GreaterThan(x => x.StartsAt)
+            .WithMessage("End date must be after the start date");
+        RuleFor(x => x.ProductIds).NotNull();
+    }
+}

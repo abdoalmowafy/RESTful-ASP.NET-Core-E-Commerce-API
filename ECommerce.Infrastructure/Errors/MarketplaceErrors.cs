@@ -23,4 +23,13 @@ public static class MarketplaceErrors
         public static readonly Error CustomerNotFound = Error.NotFound("Customer.NotFound", "Customer profile not found");
         public static readonly Error AdminNotFound = Error.NotFound("Admin.NotFound", "Admin profile not found");
     }
+
+    public static class Offer
+    {
+        public static readonly Error NotFound = Error.NotFound("Offer.NotFound", "Offer not found");
+        public static readonly Error NotOwned = Error.Forbidden("Offer.NotOwned", "You do not own this offer");
+        public static readonly Error InvalidDates = Error.BadRequest("Offer.InvalidDates", "Offer end date must be after the start date");
+        public static readonly Error ProductNotOwned = Error.Forbidden("Offer.ProductNotOwned", "One or more products do not belong to your store");
+        public static readonly Error NoProducts = Error.BadRequest("Offer.NoProducts", "An offer must include at least one product");
+    }
 }

@@ -124,7 +124,10 @@ public class OrdersService(AppDbContext context, IPaymobService paymobService, I
                 return Result.Failure<CheckoutResponse>(CatalogErrors.StoreAddress.NotFound);
         }
 
-        var order = CreateOrder(user, request, address, cart);
+        var offerDiscounts = await _context.LoadBestOfferDiscountByProductAsync(
+            cartProducts.Select(cp => cp.Product!.Id).ToList(), DateTime.UtcNow, cancellationToken);
+
+        var order = CreateOrder(user, request, address, cart, offerDiscounts);
         if (request.PaymentMethod != PaymentMethod.COD)
             order.RecordStatus("Awaiting online payment");
         _context.Orders.Add(order);
@@ -203,7 +206,12 @@ public class OrdersService(AppDbContext context, IPaymobService paymobService, I
         return Result.Succeed();
     }
 
-    private Order CreateOrder(ApplicationUser user, CheckoutRequest request, Address address, Cart cart)
+    private Order CreateOrder(
+        ApplicationUser user,
+        CheckoutRequest request,
+        Address address,
+        Cart cart,
+        IReadOnlyDictionary<int, int> offerDiscounts)
     {
         var feeCents = request.DeliveryNeeded ? DeliveryFeeCents : 0;
         feeCents += request.PaymentMethod == PaymentMethod.COD ? CodFeeCents : 0;
@@ -214,13 +222,14 @@ public class OrdersService(AppDbContext context, IPaymobService paymobService, I
         foreach (var cartProduct in cart.CartProducts)
         {
             var product = cartProduct.Product!;
-            subtotalCents += product.FinalPriceCents * cartProduct.Quantity;
+            var (salePercent, finalPriceCents) = OfferPricing.EffectivePricing(product, offerDiscounts);
+            subtotalCents += finalPriceCents * cartProduct.Quantity;
 
             orderProducts.Add(new OrderProduct
             {
                 ProductId = product.Id,
                 ProductPriceCents = product.PriceCents,
-                SalePercent = product.SalePercent,
+                SalePercent = salePercent,
                 Quantity = cartProduct.Quantity,
                 WarrantyDays = product.WarrantyDays
             });

@@ -24,6 +24,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IServiceProvid
     public DbSet<DeleteHistory> DeletesHistory { get; set; }
     public DbSet<Search> Searches { get; set; }
     public DbSet<Store> Stores { get; set; }
+    public DbSet<Offer> Offers { get; set; }
+    public DbSet<OfferProduct> OfferProducts { get; set; }
     public DbSet<CustomerProfile> CustomerProfiles { get; set; }
     public DbSet<AdminProfile> AdminProfiles { get; set; }
     public DbSet<SellerProfile> SellerProfiles { get; set; }

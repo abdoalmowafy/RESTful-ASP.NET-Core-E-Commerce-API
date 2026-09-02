@@ -26,6 +26,7 @@ public class Product : IHasEditHistory, IHasConcurrencyToken
     public ICollection<Review> Reviews { get; set; } = [];
     public ICollection<ApplicationUser> WishlistedBy { get; set; } = [];
     public ICollection<EditHistory> EditsHistory { get; set; } = [];
+    public ICollection<OfferProduct> Offers { get; set; } = [];
 
     public long FinalPriceCents => PriceCents * (100 - SalePercent) / 100;
 }

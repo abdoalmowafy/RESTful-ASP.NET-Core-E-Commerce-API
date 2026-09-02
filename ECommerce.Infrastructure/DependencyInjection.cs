@@ -1,3 +1,4 @@
+using ECommerce.Infrastructure.Caching;
 using ECommerce.Infrastructure.Entities;
 using ECommerce.Infrastructure.Health;
 using ECommerce.Infrastructure.Persistence;
@@ -40,6 +41,9 @@ public static class DependencyInjection
         .AddDefaultTokenProviders();
 
         services.AddHttpContextAccessor();
+
+        services.Configure<HomePageCacheOptions>(configuration.GetSection(HomePageCacheOptions.SectionName));
+        services.AddScoped<HomePageCache>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {

@@ -1,6 +1,8 @@
 using ECommerce.Infrastructure.Abstractions;
+using ECommerce.Infrastructure.Caching;
 using ECommerce.Infrastructure.Entities;
 using ECommerce.Infrastructure.Persistence;
+using ECommerce.Infrastructure.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -31,6 +33,11 @@ public static class TestHost
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
+        services.AddDistributedMemoryCache();
+        services.AddScoped<ICacheService, CacheService>();
+        services.AddOptions<HomePageCacheOptions>();
+        services.AddScoped<HomePageCache>();
 
         return services.BuildServiceProvider();
     }
