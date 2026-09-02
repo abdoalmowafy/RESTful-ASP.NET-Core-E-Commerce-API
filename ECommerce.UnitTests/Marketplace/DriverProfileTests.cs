@@ -34,7 +34,7 @@ public class DriverProfileTests : IDisposable
     private DriverProfileService Sut() => new(_users);
 
     [Fact]
-    public async Task Apply_creates_pending_profile_and_assigns_driver_role()
+    public async Task Apply_creates_pending_profile_without_a_role()
     {
         var userId = await SeedUserAsync();
 
@@ -44,7 +44,8 @@ public class DriverProfileTests : IDisposable
         Assert.Equal(RegistrationStatus.PendingVerification, result.Value.Status);
 
         var user = await _users.FindByIdAsync(userId);
-        Assert.Contains("Driver", await _users.GetRolesAsync(user!));
+        Assert.DoesNotContain("Driver", await _users.GetRolesAsync(user!));
+        Assert.NotNull(user.DriverProfile);
     }
 
     [Fact]

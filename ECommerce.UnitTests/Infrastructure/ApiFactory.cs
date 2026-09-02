@@ -67,10 +67,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         foreach (var (name, perms) in new Dictionary<string, string[]>
         {
             ["SuperAdmin"] = Permissions.All,
-            ["Admin"] = Permissions.All,
-            ["Customer"] = Array.Empty<string>(),
-            ["Seller"] = Array.Empty<string>(),
-            ["Driver"] = new[] { Permissions.Deliveries.Handle }
+            ["Admin"] = Permissions.All
         })
         {
             if (await roles.FindByNameAsync(name) is null)
@@ -110,7 +107,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             };
 
             Assert.True((await users.CreateAsync(user, "Passw0rd!")).Succeeded);
-            await users.AddToRoleAsync(user, role);
+
+            if (DefaultRoles.IsAdminRole(role))
+                await users.AddToRoleAsync(user, role);
 
             switch (role)
             {

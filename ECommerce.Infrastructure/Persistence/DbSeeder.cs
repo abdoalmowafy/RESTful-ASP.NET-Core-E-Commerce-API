@@ -22,6 +22,7 @@ public static class DbSeeder
         await SeedRolesAsync(roleManager, context);
         var (superAdminId, adminId, sellerId, driverId, customerId) =
             await SeedUsersAsync(userManager, context);
+        await ClearNonAdminRoleAssignmentsAsync(context);
         await SeedStoresAsync(context, adminId, sellerId);
         await SeedCatalogAsync(context);
         await NormalizeStoredPhoneNumbersInternalAsync(context);
@@ -75,13 +76,8 @@ public static class DbSeeder
             Permissions.Admins.View
         };
 
-        var driverPermissions = new[] { Permissions.Deliveries.Handle };
-
         await EnsureRoleWithPermissionsAsync(roleManager, context, "SuperAdmin", superAdminPermissions, isDefault: true);
         await EnsureRoleWithPermissionsAsync(roleManager, context, "Admin", adminPermissions, isDefault: true);
-        await EnsureRoleWithPermissionsAsync(roleManager, context, "Driver", driverPermissions, isDefault: false);
-        await EnsureRoleWithPermissionsAsync(roleManager, context, "Customer", [], isDefault: true);
-        await EnsureRoleWithPermissionsAsync(roleManager, context, "Seller", [], isDefault: false);
 
         context.ChangeTracker.Clear();
     }
@@ -141,6 +137,22 @@ public static class DbSeeder
         return (superAdminId, adminId, sellerId, driverId, customerId);
     }
 
+    private static async Task ClearNonAdminRoleAssignmentsAsync(AppDbContext context)
+    {
+        var nonAdminRoleNames = new[] { DefaultRoles.Customer, DefaultRoles.Seller, DefaultRoles.Driver };
+        var nonAdminRoleIds = await context.Roles
+            .Where(r => nonAdminRoleNames.Contains(r.Name!))
+            .Select(r => r.Id)
+            .ToListAsync();
+
+        if (nonAdminRoleIds.Count == 0)
+            return;
+
+        await context.Set<IdentityUserRole<string>>()
+            .Where(ur => nonAdminRoleIds.Contains(ur.RoleId))
+            .ExecuteDeleteAsync();
+    }
+
     private static async Task<(string id, bool created)> CreateUserAsync(
         UserManager<ApplicationUser> userManager,
         AppDbContext context,
@@ -172,7 +184,8 @@ public static class DbSeeder
         if (!result.Succeeded)
             throw new InvalidOperationException($"Failed to seed user '{email}': {string.Join(", ", result.Errors.Select(e => e.Description))}");
 
-        await userManager.AddToRoleAsync(user, role);
+        if (DefaultRoles.IsAdminRole(role))
+            await userManager.AddToRoleAsync(user, role);
 
         switch (role)
         {

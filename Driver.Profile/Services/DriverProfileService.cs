@@ -31,8 +31,6 @@ public class DriverProfileService(UserManager<ApplicationUser> userManager) : ID
         if (user is null)
             return Result.Failure<DriverProfileResponse>(UserErrors.NotFound);
 
-        await _userManager.AddToRoleAsync(user, DefaultRoles.Driver);
-
         user.DriverProfile = new DriverProfile
         {
             Id = user.Id,

@@ -10,10 +10,9 @@ public interface ISellerStoreService
     Task<Result<StoreResponse>> UpdateAsync(string ownerId, UpsertStoreRequest request, CancellationToken cancellationToken = default);
 }
 
-public class SellerStoreService(AppDbContext context, UserManager<ApplicationUser> userManager) : ISellerStoreService
+public class SellerStoreService(AppDbContext context) : ISellerStoreService
 {
     private readonly AppDbContext _context = context;
-    private readonly UserManager<ApplicationUser> _userManager = userManager;
 
     public async Task<Result<StoreResponse>> GetMineAsync(string ownerId, CancellationToken cancellationToken = default)
     {
@@ -54,10 +53,6 @@ public class SellerStoreService(AppDbContext context, UserManager<ApplicationUse
 
         _context.SellerProfiles.Add(new SellerProfile { Id = ownerId, StoreId = store.Id });
         await _context.SaveChangesAsync(cancellationToken);
-
-        var owner = await _userManager.FindByIdAsync(ownerId);
-        if (owner is not null && !await _userManager.IsInRoleAsync(owner, "Seller"))
-            await _userManager.AddToRoleAsync(owner, "Seller");
 
         return Result.Succeed(ToResponse(store));
     }

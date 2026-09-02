@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using ECommerce.Infrastructure.Abstractions;
 using ECommerce.Infrastructure.Entities;
 
 namespace ECommerce.Infrastructure.Extensions;
@@ -18,6 +19,6 @@ public static class UserExtensions
     public static bool IsStaff(this ClaimsPrincipal user)
     {
         var roles = user.GetRoleNames();
-        return roles.Contains("Admin") || roles.Contains("SuperAdmin");
+        return roles.Any(DefaultRoles.IsAdminRole);
     }
 }

@@ -29,7 +29,9 @@ public class AuthRegistrationServiceTests : IDisposable
 
         var user = await _users.FindByEmailAsync("sara@shop.test");
         Assert.NotNull(user);
-        Assert.Contains("Customer", await _users.GetRolesAsync(user!));
+        Assert.DoesNotContain("Customer", await _users.GetRolesAsync(user!));
+        Assert.NotNull(user.CustomerProfile);
+        Assert.Equal(RegistrationStatus.Active, user.CustomerProfile.RegistrationStatus);
     }
 
     [Fact]

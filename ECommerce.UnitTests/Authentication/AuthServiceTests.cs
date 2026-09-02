@@ -96,18 +96,23 @@ public class AuthServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task Valid_login_returns_token_and_roles()
+    public async Task Valid_login_returns_token_and_no_roles_for_customer()
     {
         var user = await SeedUserAsync();
-        await _users.AddToRoleAsync(user, "Customer");
+        user.CustomerProfile = new CustomerProfile { Id = user.Id, RegistrationStatus = RegistrationStatus.Active };
+        await _users.UpdateAsync(user);
 
         var result = await CreateSut().LoginAsync(new LoginRequest("login@shop.test", "Passw0rd!"));
 
         Assert.True(result.IsSucceed);
         Assert.False(string.IsNullOrWhiteSpace(result.Value.Token));
         Assert.Equal(3600, result.Value.ExpiresIn);
-        Assert.Contains("Customer", result.Value.Roles);
+        Assert.DoesNotContain("Customer", result.Value.Roles);
         Assert.Equal("login@shop.test", result.Value.Email);
+
+        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(result.Value.Token);
+        Assert.Contains(jwt.Claims, c => c.Type == "customer_status" && c.Value == "Active");
     }
 
     public void Dispose() => (_sp as IDisposable)?.Dispose();

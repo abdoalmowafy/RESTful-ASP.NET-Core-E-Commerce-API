@@ -38,10 +38,14 @@ public class JwtProvider(
             new("phone_number_confirmed", user.PhoneNumberConfirmed.ToString().ToLowerInvariant())
         };
 
-        foreach (var role in roles)
+        foreach (var role in roles.Where(r => DefaultRoles.IsAdminRole(r)))
             claims.Add(new Claim("roles", role));
 
-        if (roles.Contains(DefaultRoles.Customer))
+        var hasCustomerProfile = await _dbContext.CustomerProfiles
+            .AsNoTracking()
+            .AnyAsync(p => p.Id == user.Id, cancellationToken);
+
+        if (hasCustomerProfile)
         {
             var status = await _dbContext.CustomerProfiles
                 .AsNoTracking()
@@ -52,7 +56,11 @@ public class JwtProvider(
             claims.Add(new Claim("customer_status", (status ?? RegistrationStatus.PendingVerification).ToString()));
         }
 
-        if (roles.Contains(DefaultRoles.Seller))
+        var hasStore = await _dbContext.Stores
+            .AsNoTracking()
+            .AnyAsync(s => s.OwnerId == user.Id && s.DeletedAt == null, cancellationToken);
+
+        if (hasStore)
         {
             var storeStatus = await _dbContext.Stores
                 .AsNoTracking()
@@ -64,7 +72,11 @@ public class JwtProvider(
                 (storeStatus ?? StoreStatus.PendingVerification).ToString()));
         }
 
-        if (roles.Contains(DefaultRoles.Driver))
+        var hasDriverProfile = await _dbContext.DriverProfiles
+            .AsNoTracking()
+            .AnyAsync(p => p.Id == user.Id, cancellationToken);
+
+        if (hasDriverProfile)
         {
             var driverStatus = await _dbContext.DriverProfiles
                 .AsNoTracking()

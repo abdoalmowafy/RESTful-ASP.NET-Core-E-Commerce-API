@@ -30,7 +30,7 @@ public class DeviceRegistryService(
         if (user is null)
             return Result.Failure(UserErrors.NotFound);
 
-        var ownerType = ResolveOwnerType(await _userManager.GetRolesAsync(user));
+        var ownerType = ResolveOwnerType(actor);
 
         return await _tokenService.RegisterAsync(
             ownerType, userId, token, platform, deviceName, cancellationToken);
@@ -63,11 +63,15 @@ public class DeviceRegistryService(
         return Result.Succeed<IReadOnlyList<RegisteredDeviceResponse>>(devices);
     }
 
-    private static AppOwnerType ResolveOwnerType(IList<string> roles)
+    private static AppOwnerType ResolveOwnerType(ClaimsPrincipal actor)
     {
-        if (roles.Contains("Driver")) return AppOwnerType.Driver;
-        if (roles.Contains("Seller")) return AppOwnerType.Seller;
-        if (roles.Contains("Admin") || roles.Contains("SuperAdmin")) return AppOwnerType.Admin;
+        var roles = actor.GetRoleNames();
+        if (roles.Any(DefaultRoles.IsAdminRole))
+            return AppOwnerType.Admin;
+        if (actor.HasClaim(c => c.Type == "driver_status"))
+            return AppOwnerType.Driver;
+        if (actor.HasClaim(c => c.Type == "store_status"))
+            return AppOwnerType.Seller;
         return AppOwnerType.Customer;
     }
 }

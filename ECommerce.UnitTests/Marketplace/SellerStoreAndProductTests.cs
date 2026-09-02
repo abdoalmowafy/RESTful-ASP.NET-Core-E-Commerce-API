@@ -53,7 +53,7 @@ public class SellerStoreAndProductTests : IDisposable
     public async Task Create_store_starts_pending_and_blocks_selling_until_approved()
     {
         var ownerId = await SeedSellerAsync();
-        var storeSut = new SellerStoreService(_db, userManager());
+        var storeSut = new SellerStoreService(_db);
 
         var created = await storeSut.CreateAsync(ownerId, new UpsertStoreRequest("Gadget Garage", "electronics", null));
         Assert.Equal(StoreStatus.PendingVerification, created.Value.Status);
@@ -119,7 +119,7 @@ public class SellerStoreAndProductTests : IDisposable
     {
         var ownerId = await SeedSellerAsync();
         await StoreSeed.CreateAsync(_db, ownerId);
-        var sut = new SellerStoreService(_db, userManager());
+        var sut = new SellerStoreService(_db);
 
         var result = await sut.CreateAsync(ownerId, new UpsertStoreRequest("Another One", null, null));
 
@@ -128,16 +128,17 @@ public class SellerStoreAndProductTests : IDisposable
     }
 
     [Fact]
-    public async Task Creating_first_store_promotes_owner_to_seller_role()
+    public async Task Creating_first_store_creates_seller_profile_without_a_role()
     {
         var ownerId = await SeedSellerAsync();
-        var sut = new SellerStoreService(_db, userManager());
+        var sut = new SellerStoreService(_db);
 
         var created = await sut.CreateAsync(ownerId, new UpsertStoreRequest("Promo Store", null, null));
         Assert.True(created.IsSucceed);
 
         var owner = await userManager().FindByIdAsync(ownerId);
-        Assert.Contains("Seller", await userManager().GetRolesAsync(owner!));
+        Assert.DoesNotContain("Seller", await userManager().GetRolesAsync(owner!));
+        Assert.True(await _db.SellerProfiles.AnyAsync(p => p.Id == ownerId));
     }
 
     public void Dispose() => (_sp as IDisposable)?.Dispose();

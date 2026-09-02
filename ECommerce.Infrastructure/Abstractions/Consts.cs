@@ -21,6 +21,9 @@ public static class DefaultRoles
     public const string Customer = "Customer";
     public const string Seller = "Seller";
     public const string Driver = "Driver";
+
+    public static bool IsAdminRole(string roleName)
+        => roleName == SuperAdmin || roleName == Admin;
 }
 
 public static class RegexPatterns
